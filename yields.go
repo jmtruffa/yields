@@ -1,78 +1,136 @@
 package main
 
 import (
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-	"math"
-	"time"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"math"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // define data structure to hold the json data
 type Flujo struct {
-	Date time.Time
-	Rate float64
-	Amort float64
+	Date     time.Time
+	Rate     float64
+	Amort    float64
 	Residual float64
-	Amount float64
+	Amount   float64
 }
 
 type Bond struct {
-	ID string
-	Ticker string
+	ID        string
+	Ticker    string
 	IssueDate time.Time
-	Maturity time.Time
-	Coupon float64
-	Cashflow []Flujo
+	Maturity  time.Time
+	Coupon    float64
+	Cashflow  []Flujo
 }
 
-
+var Bonds []Bond
 
 func main() {
-    
-    // load json with all the bond's data and handle any errors
-    data, err := ioutil.ReadFile("./bonds.json")
-    if err != nil {
-      fmt.Print(err)
-    }
-		
-	  // json data
-	  var bonds []Bond
-
-	 // unmarshall the loaded JSON
-	 err = json.Unmarshal([]byte(data), &bonds)
-	 if err != nil {
-		 fmt.Println("error:", err)
-	 }
-
-
-	for i := 1; i <2500; i++ {
-		i:=4 //settlement offset
-
-		fmt.Println("Ejercicio GD30: ", "\n")
-		fmt.Println("Precio: ", 32.54)
-		fmt.Println("Settlement: ", time.Now().AddDate(0,0,i).Format("2006-01-02"), "\n")
-		yield, err := Yield(bonds[0].Cashflow, 32.54, time.Now().AddDate(0,0,i))
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Printf("Yield: %.4f%%\n", yield * 100)
-
-		fmt.Println("==================================\n")
-		fmt.Println("Ejercicio GD30: ", "\n")
-		fmt.Printf("Yield: %.4f%%\n", yield * 100)
-		fmt.Println("Settlement: ", time.Now().AddDate(0,0,i).Format("2006-01-02"), "\n")
-		price, err := Price(bonds[0].Cashflow, 0.2633, time.Now().AddDate(0,0,i))
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Printf("Price: %.2f\n", price)
-		
+	// load json with all the bond's data and handle any errors
+	data, err := ioutil.ReadFile("./bonds.json")
+	if err != nil {
+		fmt.Print(err)
 	}
+
+	// json data
+
+	// unmarshall the loaded JSON
+	err = json.Unmarshal([]byte(data), &Bonds)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	// with the json loaded,
+	router := gin.Default()
+	router.GET("/yield", yieldWrapper)
+	router.GET("/price", priceWrapper)
+
+	router.Run("localhost:8080")
+
 }
 
-func Yield (flow []Flujo, price float64, settlementDate time.Time) (float64, error) {
+// TODO: function to search for the corresponding bond schedule to pass to Yield and Price
+
+func yieldWrapper(c *gin.Context) {
+	ticker, _ := c.GetQuery("ticker")
+	settle, _ := c.GetQuery("settlementDate")
+	settlementDate, error := time.Parse("2006-01-02", settle)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
+		//c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+		return
+	}
+	priceTemp, _ := c.GetQuery("price")
+	price, error := strconv.ParseFloat(priceTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+		return
+	}
+	cashFlow, error := getCashFlow(ticker)
+	if error != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
+		return
+	}
+
+	//cashFlow := Bonds[0].Cashflow
+	r, error := Yield(cashFlow, price, settlementDate)
+	if error != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation"})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, r)
+}
+
+//func getCashFlow
+func getCashFlow(ticker string) ([]Flujo, error) {
+	for _, bond := range Bonds {
+		if bond.Ticker == ticker {
+			return bond.Cashflow, nil
+		}
+	}
+	return nil, errors.New("Ticker Not Found")
+}
+
+func priceWrapper(c *gin.Context) {
+	ticker, _ := c.GetQuery("ticker")
+	settle, _ := c.GetQuery("settlementDate")
+	settlementDate, error := time.Parse("2006-01-02", settle)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
+		//c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+		return
+	}
+	rateTemp, _ := c.GetQuery("rate")
+	rate, error := strconv.ParseFloat(rateTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+		return
+	}
+	fmt.Println(rate)
+	fmt.Println(settlementDate)
+	fmt.Println(ticker)
+	cashFlow, error := getCashFlow(ticker)
+	if error != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
+		return
+	}
+
+	p, error := Price(cashFlow, rate, settlementDate)
+	if error != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Price calculation"})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, p)
+}
+
+func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, error) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 
@@ -82,7 +140,7 @@ func Yield (flow []Flujo, price float64, settlementDate time.Time) (float64, err
 			break
 		}
 	}
-	
+
 	values := make([]float64, len(flow)+1)
 	dates := make([]time.Time, len(flow)+1)
 
@@ -103,8 +161,9 @@ func Yield (flow []Flujo, price float64, settlementDate time.Time) (float64, err
 
 	return rate, nil
 }
+
 //ScheduledNetPresentValue(rate float64, values []float64, dates []time.Time)
-func Price (flow []Flujo, rate float64, settlementDate time.Time) (float64, error) {
+func Price(flow []Flujo, rate float64, settlementDate time.Time) (float64, error) {
 	// TODO: settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 
@@ -131,7 +190,7 @@ func Price (flow []Flujo, rate float64, settlementDate time.Time) (float64, erro
 		return 0, error
 	}
 
-	return price,nil
+	return price, nil
 }
 
 // ScheduledNetPresentValue returns the Net Present Value of a scheduled cash flow series given a discount rate
@@ -178,7 +237,6 @@ func ScheduledInternalRateOfReturn(values []float64, dates []time.Time, guess fl
 	}
 	return newton(guess, function, derivative, 0)
 }
-
 func dScheduledNetPresentValue(rate float64, values []float64, dates []time.Time) (float64, error) {
 	if len(values) != len(dates) {
 		return 0, errors.New("values and dates must have the same length")
@@ -207,12 +265,11 @@ func minMaxSlice(values []float64) (float64, float64) {
 	return min, max
 }
 
-
 const (
 	// MaxIterations determines the maximum number of iterations performed by the Newton-Raphson algorithm.
 	MaxIterations = 30
 	// Precision determines how close to the solution the Newton-Raphson algorithm should arrive before stopping.
-	Precision = 1E-6
+	Precision = 1e-6
 )
 
 func newton(guess float64, function func(float64) float64, derivative func(float64) float64, numIt int) (float64, error) {
