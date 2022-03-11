@@ -31,23 +31,86 @@ type Bond struct {
 	Cashflow  []Flujo
 }
 
+const dateFormat = "2006-01-02"
+
 var Bonds []Bond
+
+func (c *Flujo) UnmarshalJSON(p []byte) error {
+	var aux struct {
+		Date     string  `json:"date"`
+		Rate     float64 `json:"rate"`
+		Amort    float64 `json:"amortization"`
+		Residual float64 `json:"residual"`
+		Amount   float64 `json:"amount"`
+	}
+	if err := json.Unmarshal(p, &aux); err != nil {
+		return err
+	}
+	t, err := time.Parse(dateFormat, aux.Date)
+	if err != nil {
+		return err
+	}
+	c.Date = t
+	fmt.Println("Date: ", c.Date)
+	c.Rate = aux.Rate
+	fmt.Println("Rate: ", c.Rate)
+	c.Amort = aux.Amort
+	fmt.Println("Amort: ", c.Amort)
+	c.Residual = aux.Residual
+	fmt.Println("Residual: ", c.Residual)
+	c.Amount = aux.Amount
+	fmt.Println("Amount: ", c.Amount)
+	return nil
+}
+
+func (u *Bond) UnmarshalJSON(p []byte) error {
+	var aux struct {
+		ID        string  `json:"id"`
+		Ticker    string  `json:"ticker"`
+		IssueDate string  `json:"issueDate"`
+		Maturity  string  `json:"maturity"`
+		Coupon    float64 `json:"coupon"`
+		Cashflow  []Flujo `json:"cashflow"`
+	}
+
+	err := json.Unmarshal(p, &aux)
+	if err != nil {
+		return err
+	}
+
+	t, err := time.Parse(dateFormat, aux.IssueDate)
+	if err != nil {
+		return err
+	}
+	y, err := time.Parse(dateFormat, aux.Maturity)
+	if err != nil {
+		return err
+	}
+	u.ID = aux.ID
+	u.Ticker = aux.Ticker
+	u.IssueDate = t
+	u.Maturity = y
+	u.Coupon = aux.Coupon
+	return nil
+}
 
 func main() {
 	// load json with all the bond's data and handle any errors
-	data, err := ioutil.ReadFile("./bonds.json")
+	data, err := ioutil.ReadFile("./bonds2.json")
 	if err != nil {
 		fmt.Print(err)
 	}
 
 	// json data
-
 	// unmarshall the loaded JSON
 	err = json.Unmarshal([]byte(data), &Bonds)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	// with the json loaded,
+	fmt.Println("Bonds: ", Bonds)
+	fmt.Println("Cashflow: ", Bonds[0].Cashflow)
+	fmt.Println("Cashflow: ", Bonds[1].Cashflow)
+	// with the json loaded
 	router := gin.Default()
 	router.GET("/yield", yieldWrapper)
 	router.GET("/price", priceWrapper)
@@ -87,6 +150,10 @@ func yieldWrapper(c *gin.Context) {
 }
 
 func getCashFlow(ticker string) ([]Flujo, error) {
+	fmt.Println("Ticker solicitado: ", ticker)
+	fmt.Println("Bonds available: ", Bonds)
+	fmt.Println("Flujo del bono: ", Bonds[0].Cashflow)
+	fmt.Println("Flujo del bono: ", Bonds[1].Cashflow)
 	for _, bond := range Bonds {
 		if bond.Ticker == ticker {
 			return bond.Cashflow, nil
@@ -134,7 +201,6 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, erro
 			break
 		}
 	}
-
 	values := make([]float64, len(flow)+1)
 	dates := make([]time.Time, len(flow)+1)
 
@@ -147,7 +213,6 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, erro
 		values[i] = flow[i-1].Amount
 		dates[i] = flow[i-1].Date
 	}
-
 	rate, error := ScheduledInternalRateOfReturn(values, dates, 0.001)
 	if error != nil {
 		return 0, error
