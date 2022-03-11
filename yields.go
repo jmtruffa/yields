@@ -50,7 +50,7 @@ func (c *Flujo) UnmarshalJSON(p []byte) error {
 	if err != nil {
 		return err
 	}
-	c.Date = t
+	(*c).Date = t
 	fmt.Println("Date: ", c.Date)
 	c.Rate = aux.Rate
 	fmt.Println("Rate: ", c.Rate)
@@ -88,8 +88,8 @@ func (u *Bond) UnmarshalJSON(p []byte) error {
 	}
 	u.ID = aux.ID
 	u.Ticker = aux.Ticker
-	u.IssueDate = t
-	u.Maturity = y
+	(*u).IssueDate = t
+	(*u).Maturity = y
 	u.Coupon = aux.Coupon
 	return nil
 }
