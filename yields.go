@@ -56,8 +56,6 @@ func main() {
 
 }
 
-// TODO: function to search for the corresponding bond schedule to pass to Yield and Price
-
 func yieldWrapper(c *gin.Context) {
 	ticker, _ := c.GetQuery("ticker")
 	settle, _ := c.GetQuery("settlementDate")
@@ -79,7 +77,7 @@ func yieldWrapper(c *gin.Context) {
 		return
 	}
 
-	//cashFlow := Bonds[0].Cashflow
+	//cashFlow := Bonds[0].Cashflow used when getCashFlow was not written yet
 	r, error := Yield(cashFlow, price, settlementDate)
 	if error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation"})
@@ -88,7 +86,6 @@ func yieldWrapper(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, r)
 }
 
-//func getCashFlow
 func getCashFlow(ticker string) ([]Flujo, error) {
 	for _, bond := range Bonds {
 		if bond.Ticker == ticker {
@@ -113,9 +110,6 @@ func priceWrapper(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
 		return
 	}
-	fmt.Println(rate)
-	fmt.Println(settlementDate)
-	fmt.Println(ticker)
 	cashFlow, error := getCashFlow(ticker)
 	if error != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
@@ -162,9 +156,8 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, erro
 	return rate, nil
 }
 
-//ScheduledNetPresentValue(rate float64, values []float64, dates []time.Time)
 func Price(flow []Flujo, rate float64, settlementDate time.Time) (float64, error) {
-	// TODO: settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
+	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 
 	for i, cf := range flow {
@@ -194,10 +187,9 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time) (float64, error
 }
 
 // ScheduledNetPresentValue returns the Net Present Value of a scheduled cash flow series given a discount rate
-//
 // Excel equivalent: XNPV
 func ScheduledNetPresentValue(rate float64, values []float64, dates []time.Time) (float64, error) {
-	// this function calculates de price on the date of the first element.
+	// this function calculates the price on the date of the first element.
 	// by providing a settlementDate, we can calculate the price on any date.
 	// we just need to add a first element consisting of the settlementDate and 0 Amount prior to passing the values and dates arrays to the function
 
@@ -216,7 +208,6 @@ func ScheduledNetPresentValue(rate float64, values []float64, dates []time.Time)
 
 // ScheduledInternalRateOfReturn returns the internal rate of return of a scheduled cash flow series.
 // Guess is a guess for the rate, used as a starting point for the iterative algorithm.
-//
 // Excel equivalent: XIRR
 func ScheduledInternalRateOfReturn(values []float64, dates []time.Time, guess float64) (float64, error) {
 	min, max := minMaxSlice(values)
@@ -237,6 +228,7 @@ func ScheduledInternalRateOfReturn(values []float64, dates []time.Time, guess fl
 	}
 	return newton(guess, function, derivative, 0)
 }
+
 func dScheduledNetPresentValue(rate float64, values []float64, dates []time.Time) (float64, error) {
 	if len(values) != len(dates) {
 		return 0, errors.New("values and dates must have the same length")
