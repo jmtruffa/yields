@@ -43,23 +43,20 @@ func (c *Flujo) UnmarshalJSON(p []byte) error {
 		Residual float64 `json:"residual"`
 		Amount   float64 `json:"amount"`
 	}
-	if err := json.Unmarshal(p, &aux); err != nil {
+	err := json.Unmarshal(p, &aux)
+	if err != nil {
 		return err
 	}
+
 	t, err := time.Parse(dateFormat, aux.Date)
 	if err != nil {
 		return err
 	}
-	(*c).Date = t
-	fmt.Println("Date: ", c.Date)
+	c.Date = t
 	c.Rate = aux.Rate
-	fmt.Println("Rate: ", c.Rate)
 	c.Amort = aux.Amort
-	fmt.Println("Amort: ", c.Amort)
 	c.Residual = aux.Residual
-	fmt.Println("Residual: ", c.Residual)
 	c.Amount = aux.Amount
-	fmt.Println("Amount: ", c.Amount)
 	return nil
 }
 
@@ -70,7 +67,7 @@ func (u *Bond) UnmarshalJSON(p []byte) error {
 		IssueDate string  `json:"issueDate"`
 		Maturity  string  `json:"maturity"`
 		Coupon    float64 `json:"coupon"`
-		Cashflow  []Flujo `json:"cashflow"`
+		Cashflow  []Flujo `json:"cashFlow"`
 	}
 
 	err := json.Unmarshal(p, &aux)
@@ -88,9 +85,10 @@ func (u *Bond) UnmarshalJSON(p []byte) error {
 	}
 	u.ID = aux.ID
 	u.Ticker = aux.Ticker
-	(*u).IssueDate = t
-	(*u).Maturity = y
+	u.IssueDate = t
+	u.Maturity = y
 	u.Coupon = aux.Coupon
+	u.Cashflow = aux.Cashflow
 	return nil
 }
 
@@ -107,9 +105,7 @@ func main() {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	fmt.Println("Bonds: ", Bonds)
-	fmt.Println("Cashflow: ", Bonds[0].Cashflow)
-	fmt.Println("Cashflow: ", Bonds[1].Cashflow)
+
 	// with the json loaded
 	router := gin.Default()
 	router.GET("/yield", yieldWrapper)
@@ -140,7 +136,6 @@ func yieldWrapper(c *gin.Context) {
 		return
 	}
 
-	//cashFlow := Bonds[0].Cashflow used when getCashFlow was not written yet
 	r, error := Yield(cashFlow, price, settlementDate)
 	if error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation"})
@@ -150,10 +145,6 @@ func yieldWrapper(c *gin.Context) {
 }
 
 func getCashFlow(ticker string) ([]Flujo, error) {
-	fmt.Println("Ticker solicitado: ", ticker)
-	fmt.Println("Bonds available: ", Bonds)
-	fmt.Println("Flujo del bono: ", Bonds[0].Cashflow)
-	fmt.Println("Flujo del bono: ", Bonds[1].Cashflow)
 	for _, bond := range Bonds {
 		if bond.Ticker == ticker {
 			return bond.Cashflow, nil
@@ -201,6 +192,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, erro
 			break
 		}
 	}
+
 	values := make([]float64, len(flow)+1)
 	dates := make([]time.Time, len(flow)+1)
 
