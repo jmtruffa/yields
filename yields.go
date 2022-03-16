@@ -94,11 +94,10 @@ func (u *Bond) UnmarshalJSON(p []byte) error {
 
 func main() {
 	// load json with all the bond's data and handle any errors
-	data, err := ioutil.ReadFile("./bonds2.json")
+	data, err := ioutil.ReadFile("./bonds.json")
 	if err != nil {
 		fmt.Print(err)
 	}
-
 	// json data
 	// unmarshall the loaded JSON
 	err = json.Unmarshal([]byte(data), &Bonds)
