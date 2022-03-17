@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 // define data structure to hold the json data
@@ -115,27 +114,42 @@ func main() {
 }
 
 func yieldWrapper(c *gin.Context) {
+	/* Params: ticker, settlementDate, price, initialFee, endingFee */
+
 	ticker, _ := c.GetQuery("ticker")
 	settle, _ := c.GetQuery("settlementDate")
 	settlementDate, error := time.Parse("2006-01-02", settle)
 	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Settlement Date. ": "Invalid date format"})
 		//c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
 		return
 	}
 	priceTemp, _ := c.GetQuery("price")
 	price, error := strconv.ParseFloat(priceTemp, 64)
 	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Price. ": error.Error()})
 		return
 	}
-	cashFlow, error := getCashFlow(ticker)
+	initialFeeTemp, _ := c.GetQuery("initialFee")
+	initialFee, error := strconv.ParseFloat(initialFeeTemp, 64)
 	if error != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Initial Fee. ": error.Error()})
+		return
+	}
+	endingFeeTemp, _ := c.GetQuery("endingFee")
+	endingFee, error := strconv.ParseFloat(endingFeeTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Ending Fee. ": error.Error()})
 		return
 	}
 
-	r, error := Yield(cashFlow, price, settlementDate)
+	cashFlow, error := getCashFlow(ticker)
+	if error != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
+		return
+	}
+
+	r, error := Yield(cashFlow, price, settlementDate, initialFee, endingFee)
 	if error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation"})
 		return
@@ -167,13 +181,27 @@ func priceWrapper(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
 		return
 	}
+
+	initialFeeTemp, _ := c.GetQuery("initialFee")
+	initialFee, error := strconv.ParseFloat(initialFeeTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Initial Fee. ": error.Error()})
+		return
+	}
+	endingFeeTemp, _ := c.GetQuery("endingFee")
+	endingFee, error := strconv.ParseFloat(endingFeeTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Ending Fee. ": error.Error()})
+		return
+	}
+
 	cashFlow, error := getCashFlow(ticker)
 	if error != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
 		return
 	}
 
-	p, error := Price(cashFlow, rate, settlementDate)
+	p, error := Price(cashFlow, rate, settlementDate, initialFee, endingFee)
 	if error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Price calculation"})
 		return
@@ -181,7 +209,7 @@ func priceWrapper(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, p)
 }
 
-func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, error) {
+func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 
@@ -196,7 +224,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, erro
 	dates := make([]time.Time, len(flow)+1)
 
 	// Add the first cashflow which is the price argument
-	values[0] = -price
+	values[0] = -price * (1 - initialFee)
 	dates[0] = settlementDate
 
 	// need to generate the arrays to pass as arguments to the function
@@ -204,6 +232,8 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, erro
 		values[i] = flow[i-1].Amount
 		dates[i] = flow[i-1].Date
 	}
+	values[len(flow)] = values[len(flow)] * (1 - endingFee)
+
 	rate, error := ScheduledInternalRateOfReturn(values, dates, 0.001)
 	if error != nil {
 		return 0, error
@@ -212,7 +242,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time) (float64, erro
 	return rate, nil
 }
 
-func Price(flow []Flujo, rate float64, settlementDate time.Time) (float64, error) {
+func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 
@@ -233,13 +263,14 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time) (float64, error
 		values[i] = flow[i-1].Amount
 		dates[i] = flow[i-1].Date
 	}
+	values[len(flow)] = values[len(flow)] * (1 - endingFee)
 
 	price, error := ScheduledNetPresentValue(rate, values, dates)
 	if error != nil {
 		return 0, error
 	}
 
-	return price, nil
+	return price * (1 + initialFee), nil
 }
 
 // ScheduledNetPresentValue returns the Net Present Value of a scheduled cash flow series given a discount rate
