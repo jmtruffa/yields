@@ -21,6 +21,14 @@ type Flujo struct {
 	Amount   float64
 }
 
+type FlujoOut struct {
+	Date     string
+	Rate     float64
+	Amort    float64
+	Residual float64
+	Amount   float64
+}
+
 type Bond struct {
 	ID        string
 	Ticker    string
@@ -108,9 +116,66 @@ func main() {
 	router := gin.Default()
 	router.GET("/yield", yieldWrapper)
 	router.GET("/price", priceWrapper)
+	// TODO: add a route to get the schedule of payments for a bond
+	router.GET("/schedule", scheduleWrapper)
 
 	router.Run("localhost:8080")
 
+}
+func scheduleWrapper(c *gin.Context) {
+	ticker := c.Query("ticker")
+	settlementDate := c.Query("settlementDate")
+	if ticker == "" || settlementDate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ticker and settlementDate are required",
+		})
+		return
+	}
+	t, err := time.Parse(dateFormat, settlementDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid settlementDate",
+		})
+		return
+	}
+	cashFlow, err := getCashFlow(ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ticker not found",
+		})
+		return
+	}
+	scheduleOut := getScheduleOfPayments(cashFlow, t)
+	c.JSON(http.StatusOK, gin.H{
+		"schedule": scheduleOut,
+	})
+
+}
+
+func getScheduleOfPayments(cashFlow []Flujo, settlementDate time.Time) []FlujoOut {
+	var schedule []FlujoOut
+	for _, cash := range cashFlow {
+		if cash.Date.After(settlementDate.Add(-24 * time.Hour)) {
+			schedule = append(schedule, FlujoOut{
+				Date:     cash.Date.Format(dateFormat),
+				Rate:     cash.Rate,
+				Amort:    cash.Amort,
+				Residual: cash.Residual,
+				Amount:   cash.Amount,
+			})
+		}
+
+	}
+	return schedule
+}
+
+func getCashFlow(ticker string) ([]Flujo, error) {
+	for _, bond := range Bonds {
+		if bond.Ticker == ticker {
+			return bond.Cashflow, nil
+		}
+	}
+	return nil, errors.New("Ticker Not Found")
 }
 
 func yieldWrapper(c *gin.Context) {
@@ -155,15 +220,6 @@ func yieldWrapper(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, r)
-}
-
-func getCashFlow(ticker string) ([]Flujo, error) {
-	for _, bond := range Bonds {
-		if bond.Ticker == ticker {
-			return bond.Cashflow, nil
-		}
-	}
-	return nil, errors.New("Ticker Not Found")
 }
 
 func priceWrapper(c *gin.Context) {
@@ -214,7 +270,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee flo
 	// Discard all cashflows before the settlementDate
 
 	for i, cf := range flow {
-		if cf.Date.After(settlementDate) {
+		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
 			flow = flow[i:]
 			break
 		}
@@ -247,7 +303,7 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee floa
 	// Discard all cashflows before the settlementDate
 
 	for i, cf := range flow {
-		if cf.Date.After(settlementDate) {
+		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
 			flow = flow[i:]
 			break
 		}
