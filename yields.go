@@ -12,17 +12,16 @@ import (
 	"time"
 )
 
+// to embed the time in a custom format to parse the dates that come from the json
+type Fecha time.Time
+
+const DateFormat = "2006-01-02"
+
+var Bonds []Bond
+
 // define data structure to hold the json data
 type Flujo struct {
-	Date     time.Time
-	Rate     float64
-	Amort    float64
-	Residual float64
-	Amount   float64
-}
-
-type FlujoOut struct {
-	Date     string
+	Date     Fecha
 	Rate     float64
 	Amort    float64
 	Residual float64
@@ -32,71 +31,41 @@ type FlujoOut struct {
 type Bond struct {
 	ID        string
 	Ticker    string
-	IssueDate time.Time
-	Maturity  time.Time
+	IssueDate Fecha
+	Maturity  Fecha
 	Coupon    float64
 	Cashflow  []Flujo
 }
 
-const dateFormat = "2006-01-02"
+// embed methods in the custom struct to be able to use them
+func (d Fecha) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + time.Time(d).Format(DateFormat) + `"`), nil
+}
 
-var Bonds []Bond
-
-func (c *Flujo) UnmarshalJSON(p []byte) error {
-	var aux struct {
-		Date     string  `json:"date"`
-		Rate     float64 `json:"rate"`
-		Amort    float64 `json:"amortization"`
-		Residual float64 `json:"residual"`
-		Amount   float64 `json:"amount"`
+func (d *Fecha) UnmarshalJSON(p []byte) error {
+	var s string
+	if err := json.Unmarshal(p, &s); err != nil {
+		return err
 	}
-	err := json.Unmarshal(p, &aux)
+	t, err := time.Parse(DateFormat, s)
 	if err != nil {
 		return err
 	}
-
-	t, err := time.Parse(dateFormat, aux.Date)
-	if err != nil {
-		return err
-	}
-	c.Date = t
-	c.Rate = aux.Rate
-	c.Amort = aux.Amort
-	c.Residual = aux.Residual
-	c.Amount = aux.Amount
+	*d = Fecha(t)
 	return nil
 }
 
-func (u *Bond) UnmarshalJSON(p []byte) error {
-	var aux struct {
-		ID        string  `json:"id"`
-		Ticker    string  `json:"ticker"`
-		IssueDate string  `json:"issueDate"`
-		Maturity  string  `json:"maturity"`
-		Coupon    float64 `json:"coupon"`
-		Cashflow  []Flujo `json:"cashFlow"`
-	}
+func (d Fecha) String() string {
+	x, _ := d.MarshalJSON()
+	return string(x)
+}
 
-	err := json.Unmarshal(p, &aux)
-	if err != nil {
-		return err
-	}
+func (d Fecha) After(t time.Time) bool {
+	return time.Time(d).After(t)
+}
 
-	t, err := time.Parse(dateFormat, aux.IssueDate)
-	if err != nil {
-		return err
-	}
-	y, err := time.Parse(dateFormat, aux.Maturity)
-	if err != nil {
-		return err
-	}
-	u.ID = aux.ID
-	u.Ticker = aux.Ticker
-	u.IssueDate = t
-	u.Maturity = y
-	u.Coupon = aux.Coupon
-	u.Cashflow = aux.Cashflow
-	return nil
+func (d Fecha) Format(s string) string {
+	return time.Time(d).Format(s)
 }
 
 func main() {
@@ -112,16 +81,58 @@ func main() {
 		fmt.Println("error:", err)
 	}
 
-	// with the json loaded
+	// start of the router and endpoints
 	router := gin.Default()
 	router.GET("/yield", yieldWrapper)
 	router.GET("/price", priceWrapper)
-	// TODO: add a route to get the schedule of payments for a bond
 	router.GET("/schedule", scheduleWrapper)
-
+	router.POST("/upload", uploadWrapper)
+	// run the router
 	router.Run("localhost:8080")
+}
+
+func uploadWrapper(c *gin.Context) {
+	var upload Bond
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = json.Unmarshal([]byte(jsonData), &upload)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	upload.ID = strconv.Itoa(len(Bonds) + 1)
+	Bonds = append(Bonds, upload)
+
+	c.JSON(http.StatusOK, gin.H{
+		"Result":      "Bond uploaded",
+		"Assigned ID": upload.ID,
+	})
+
+	jsonOut, err := json.Marshal(Bonds)
+	if err != nil {
+		fmt.Println("Error when marshalling:", err)
+	}
+	// backup the file containing the data first
+	dest := "./bonds_" + time.Now().Format("2006-01-02") + ".json"
+	orig := "./bonds.json"
+	cpFile, err := ioutil.ReadFile(orig)
+	if err != nil {
+		fmt.Print(err)
+	}
+	err = ioutil.WriteFile(dest, cpFile, 0644)
+	if err != nil {
+		fmt.Println("Error when copying:", err)
+	}
+	err = ioutil.WriteFile("./bonds.json", jsonOut, 0644)
+	//ioutil.WriteFile("bondsOut.json", jsonOut, 0644)
 
 }
+
 func scheduleWrapper(c *gin.Context) {
 	ticker := c.Query("ticker")
 	settlementDate := c.Query("settlementDate")
@@ -131,7 +142,7 @@ func scheduleWrapper(c *gin.Context) {
 		})
 		return
 	}
-	t, err := time.Parse(dateFormat, settlementDate)
+	t, err := time.Parse(DateFormat, settlementDate)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "invalid settlementDate",
@@ -152,12 +163,12 @@ func scheduleWrapper(c *gin.Context) {
 
 }
 
-func getScheduleOfPayments(cashFlow []Flujo, settlementDate time.Time) []FlujoOut {
-	var schedule []FlujoOut
+func getScheduleOfPayments(cashFlow []Flujo, settlementDate time.Time) []Flujo {
+	var schedule []Flujo
 	for _, cash := range cashFlow {
 		if cash.Date.After(settlementDate.Add(-24 * time.Hour)) {
-			schedule = append(schedule, FlujoOut{
-				Date:     cash.Date.Format(dateFormat),
+			schedule = append(schedule, Flujo{
+				Date:     cash.Date,
 				Rate:     cash.Rate,
 				Amort:    cash.Amort,
 				Residual: cash.Residual,
@@ -286,7 +297,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee flo
 	// need to generate the arrays to pass as arguments to the function
 	for i := 1; i <= len(flow); i++ {
 		values[i] = flow[i-1].Amount
-		dates[i] = flow[i-1].Date
+		dates[i] = time.Time(flow[i-1].Date)
 	}
 	values[len(flow)] = values[len(flow)] * (1 - endingFee)
 
@@ -317,7 +328,7 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee floa
 	// need to generate the arrays to pass as arguments to the function
 	for i := 1; i <= len(flow); i++ {
 		values[i] = flow[i-1].Amount
-		dates[i] = flow[i-1].Date
+		dates[i] = time.Time(flow[i-1].Date)
 	}
 	values[len(flow)] = values[len(flow)] * (1 - endingFee)
 
