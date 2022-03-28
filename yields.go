@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // to embed the time in a custom format to parse the dates that come from the json
@@ -291,7 +292,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee flo
 	dates := make([]time.Time, len(flow)+1)
 
 	// Add the first cashflow which is the price argument
-	values[0] = -price * (1 - initialFee)
+	values[0] = -price * (1 + initialFee)
 	dates[0] = settlementDate
 
 	// need to generate the arrays to pass as arguments to the function
