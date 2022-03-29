@@ -6,6 +6,7 @@ The script implements Gin-gonic to set up an API and the following endpoints:
 2.- price
 3.- schedule
 4.- upload
+5.- bonds
 
 1.- yield 
 
@@ -48,5 +49,9 @@ This API implements these functions from /alpeb/go-finance/:
 - minMaxSlice
 - newton
  
+ 5.- bonds
  
+ Value: (json) The list of bonds available in the API
+ 
+ This endpoint does not require any params.
  
