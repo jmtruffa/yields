@@ -88,8 +88,24 @@ func main() {
 	router.GET("/price", priceWrapper)
 	router.GET("/schedule", scheduleWrapper)
 	router.POST("/upload", uploadWrapper)
+	router.GET("/bonds", getBondsWrapper)
 	// run the router
 	router.Run("localhost:8080")
+}
+
+func getBondsWrapper(c *gin.Context) {
+	var bondsOut []string
+	for _, bond := range Bonds {
+		bondsOut = append(bondsOut, bond.Ticker)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"bonds": bondsOut,
+	})
+	/*for i := 0; i < len(Bonds); i++ {
+		c.JSON(http.StatusOK, gin.H{
+			"bonds": Bonds[i].Ticker,
+		})
+	}*/
 }
 
 func uploadWrapper(c *gin.Context) {
