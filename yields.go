@@ -173,16 +173,16 @@ func scheduleWrapper(c *gin.Context) {
 		})
 		return
 	}
-	scheduleOut := getScheduleOfPayments(cashFlow, t)
+	scheduleOut := getScheduleOfPayments(&cashFlow, &t)
 	c.JSON(http.StatusOK, gin.H{
 		"schedule": scheduleOut,
 	})
 
 }
 
-func getScheduleOfPayments(cashFlow []Flujo, settlementDate time.Time) []Flujo {
+func getScheduleOfPayments(cashFlow *[]Flujo, settlementDate *time.Time) []Flujo {
 	var schedule []Flujo
-	for _, cash := range cashFlow {
+	for _, cash := range *cashFlow {
 		if cash.Date.After(settlementDate.Add(-24 * time.Hour)) {
 			schedule = append(schedule, Flujo{
 				Date:     cash.Date,
