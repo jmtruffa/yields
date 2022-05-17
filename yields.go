@@ -247,7 +247,19 @@ func yieldWrapper(c *gin.Context) {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation"})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, r)
+
+	mduration, error := Mduration(cashFlow, r, settlementDate, initialFee, endingFee, price)
+	if error != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Yield":     r,
+		"MDuration": mduration,
+	})
+
+	//c.IndentedJSON(http.StatusOK, r)
 }
 
 func priceWrapper(c *gin.Context) {
@@ -290,14 +302,28 @@ func priceWrapper(c *gin.Context) {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Price calculation"})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, p)
+
+	mduration, error := Mduration(cashFlow, rate, settlementDate, initialFee, endingFee, p)
+	if error != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Price":     p,
+		"MDuration": mduration,
+	})
+
+	//c.IndentedJSON(http.StatusOK, p)
 }
 
 func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 
-	for i, cf := range flow {
+	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, price)
+
+	/* for i, cf := range flow {
 		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
 			flow = flow[i:]
 			break
@@ -317,7 +343,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee flo
 		dates[i] = time.Time(flow[i-1].Date)
 	}
 	values[len(flow)] = values[len(flow)] * (1 - endingFee)
-
+	*/
 	rate, error := ScheduledInternalRateOfReturn(values, dates, 0.001)
 	if error != nil {
 		return 0, error
@@ -326,11 +352,55 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee flo
 	return rate, nil
 }
 
+func Mduration(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64, price float64) (float64, error) {
+	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
+
+	if len(values) != len(dates) {
+		return 0, errors.New("values and dates must have the same length")
+	}
+
+	xnpv := 0.0
+	dur := 0.0
+	nper := len(values)
+	for i := 1; i <= nper; i++ {
+		exp := dates[i-1].Sub(dates[0]).Hours() / 24.0 / 365.0
+		xnpv = values[i-1] / math.Pow(1+rate, exp)
+		dur += xnpv * exp / -price
+	}
+	return (-1 * (dur / (1 + rate))), nil
+}
+
+// Pass the casflow and get the slices separated to use with calculating funcions.
+// To get the cashflow to use with price, pass 0 as price
+// To get the casfhflow to use with yield, pass the price obtained from the endpoint
+func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, endingFee float64, price float64) ([]float64, []time.Time) {
+	for i, cf := range flow {
+		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
+			flow = flow[i:]
+			break
+		}
+	}
+	values := make([]float64, len(flow)+1)
+	dates := make([]time.Time, len(flow)+1)
+
+	values[0] = -price * (1 + initialFee)
+	dates[0] = settlementDate
+
+	for i := 1; i <= len(flow); i++ {
+		values[i] = flow[i-1].Amount
+		dates[i] = time.Time(flow[i-1].Date)
+	}
+	values[len(flow)] = values[len(flow)] * (1 - endingFee)
+
+	return values, dates
+
+}
 func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
+	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
 
-	for i, cf := range flow {
+	/* for i, cf := range flow {
 		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
 			flow = flow[i:]
 			break
@@ -347,7 +417,7 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee floa
 		values[i] = flow[i-1].Amount
 		dates[i] = time.Time(flow[i-1].Date)
 	}
-	values[len(flow)] = values[len(flow)] * (1 - endingFee)
+	values[len(flow)] = values[len(flow)] * (1 - endingFee) */
 
 	price, error := ScheduledNetPresentValue(rate, values, dates)
 	if error != nil {
