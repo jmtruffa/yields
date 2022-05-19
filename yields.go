@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -122,7 +123,8 @@ func uploadWrapper(c *gin.Context) {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	upload.ID = strconv.Itoa(len(Bonds) + 1)
+	upload.ID = strings.ToUpper(strconv.Itoa(len(Bonds) + 1))
+	upload.Ticker = strings.ToUpper(upload.Ticker)
 	Bonds = append(Bonds, upload)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -151,7 +153,7 @@ func uploadWrapper(c *gin.Context) {
 }
 
 func scheduleWrapper(c *gin.Context) {
-	ticker := c.Query("ticker")
+	ticker := strings.ToUpper(c.Query("ticker"))
 	settlementDate := c.Query("settlementDate")
 	if ticker == "" || settlementDate == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -209,7 +211,7 @@ func getCashFlow(ticker string) ([]Flujo, error) {
 func yieldWrapper(c *gin.Context) {
 	/* Params: ticker, settlementDate, price, initialFee, endingFee */
 
-	ticker, _ := c.GetQuery("ticker")
+	ticker := strings.ToUpper(c.Query("ticker"))
 	settle, _ := c.GetQuery("settlementDate")
 	settlementDate, error := time.Parse("2006-01-02", settle)
 	if error != nil {
@@ -263,7 +265,7 @@ func yieldWrapper(c *gin.Context) {
 }
 
 func priceWrapper(c *gin.Context) {
-	ticker, _ := c.GetQuery("ticker")
+	ticker := strings.ToUpper(c.Query("ticker"))
 	settle, _ := c.GetQuery("settlementDate")
 	settlementDate, error := time.Parse("2006-01-02", settle)
 	if error != nil {

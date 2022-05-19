@@ -10,7 +10,8 @@ The script implements Gin-gonic to set up an API and the following endpoints:
 
 1.- yield 
 
-Value: (float64) Return yield of the bond given its price and cashflow.
+Value: (float64) Return yield of the bond given its price and cashflow
+      (float64) Return modified duration of the bond.
 
 Params:
   ticker: (string) ticker of the pre-loaded bond.
@@ -22,6 +23,7 @@ Params:
  2.- price
  
  Value: (float64) Price of the bond given its return and cashflow.
+        (float64) Return modified duration of the bond.
  
  Params:
   ticker: (string) ticker of the pre-loaded bond.
