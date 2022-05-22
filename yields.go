@@ -102,11 +102,7 @@ func getBondsWrapper(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"bonds": bondsOut,
 	})
-	/*for i := 0; i < len(Bonds); i++ {
-		c.JSON(http.StatusOK, gin.H{
-			"bonds": Bonds[i].Ticker,
-		})
-	}*/
+
 }
 
 func uploadWrapper(c *gin.Context) {
@@ -148,8 +144,9 @@ func uploadWrapper(c *gin.Context) {
 		fmt.Println("Error when copying:", err)
 	}
 	err = ioutil.WriteFile("./bonds.json", jsonOut, 0644)
-	//ioutil.WriteFile("bondsOut.json", jsonOut, 0644)
-
+	if err != nil {
+		fmt.Println("Error when writing:", err)
+	}
 }
 
 func scheduleWrapper(c *gin.Context) {

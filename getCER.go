@@ -37,9 +37,9 @@ func (d Fecha) String() string {
 
 // struct to hold the index (CER) to adjust the face value of indexed bonds.
 type CER struct {
-	Date    Fecha
-	Country string
-	CER     float64
+	Date Fecha
+	//Country string
+	CER float64
 }
 
 var Coef []CER
@@ -137,7 +137,8 @@ func getCER() ([]CER, error) {
 	if downloadFile {
 		// download the file again
 
-		url := "https://api.alphacast.io/datasets/8277/data?apiKey=ak_SvwhEcUJhRq3eiU7CYnT&%24select=3290015&$format=csv"
+		apiKey := os.Getenv("ALPHACAST_API_KEY")
+		url := "https://api.alphacast.io/datasets/8277/data?apiKey=" + apiKey + "&%24select=3290015&$format=csv"
 		dataset := http.Client{
 			Timeout: time.Second * 10,
 		}
@@ -172,7 +173,7 @@ func getCER() ([]CER, error) {
 		var Coef CER
 		date, _ := time.Parse(DateFormat, rows[i][0])
 		Coef.Date = Fecha(date)
-		Coef.Country = rows[i][1]
+		//Coef.Country = rows[i][1]
 		Coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
 		/*if err != nil {
 			fmt.Println("Falla en el ParseFloat. ", err, "registro: ", i)
