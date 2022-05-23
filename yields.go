@@ -86,12 +86,73 @@ func main() {
 	// start of the router and endpoints
 	router := gin.Default()
 	router.GET("/yield", yieldWrapper)
+	router.GET("/apr", aprWrapper)
 	router.GET("/price", priceWrapper)
 	router.GET("/schedule", scheduleWrapper)
 	router.POST("/upload", uploadWrapper)
 	router.GET("/bonds", getBondsWrapper)
 	// run the router
 	router.Run("localhost:8080")
+}
+
+func aprWrapper(c *gin.Context) {
+	//Params: ticker, settlementDate, price, InitialFee, endingFee
+	ticker := strings.ToUpper(c.Query("ticker"))
+
+	settle, _ := c.GetQuery("settlementDate")
+	settlementDate, error := time.Parse("2006-01-02", settle)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Settlement Date. ": "Invalid date format"})
+		//c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+		return
+	}
+	priceTemp, _ := c.GetQuery("price")
+	price, error := strconv.ParseFloat(priceTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Price. ": error.Error()})
+		return
+	}
+	initialFeeTemp, _ := c.GetQuery("initialFee")
+	initialFee, error := strconv.ParseFloat(initialFeeTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Initial Fee. ": error.Error()})
+		return
+	}
+	endingFeeTemp, _ := c.GetQuery("endingFee")
+	endingFee, error := strconv.ParseFloat(endingFeeTemp, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Ending Fee. ": error.Error()})
+		return
+	}
+	// Get the cashflow only if the ticker is a valid zero coupon bond
+	for _, bond := range Bonds {
+		if bond.Ticker == ticker {
+			//check if it's a zero coupon bond
+			if bond.Coupon != 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon must be zero"})
+				return
+			}
+		}
+	}
+	cashFlow, error := getCashFlow(ticker)
+	if error != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
+		return
+	}
+	days := time.Time(cashFlow[0].Date).Sub(settlementDate).Hours() / 24
+	r := ((100-endingFee)/(price+initialFee) - 1) * (365 / days)
+
+	mduration, error := Mduration(cashFlow, r, settlementDate, initialFee, endingFee, price)
+	if error != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Yield":     r,
+		"MDuration": mduration,
+	})
+
 }
 
 func getBondsWrapper(c *gin.Context) {
