@@ -7,6 +7,7 @@ The script implements Gin-gonic to set up an API and the following endpoints:
 3.- schedule
 4.- upload
 5.- bonds
+6.- apr
 
 1.- yield 
 
@@ -56,4 +57,19 @@ This API implements these functions from /alpeb/go-finance/:
  Value: (json) The list of bonds available in the API
  
  This endpoint does not require any params.
+
+ 6.- apr
+
+ Idem 1 but returns in APR instead of effective yield. Works only with zero coupon bonds. The endpoint checks if the requested bond is zerocoupon.
+
+ Value: (float64) Return APR of the bond given its price and cashflow
+      (float64) Return modified duration of the bond.
+
+Params:
+  ticker: (string) ticker of the pre-loaded bond.
+  settlementDate: (string) in `"2006-01-02"` format. 
+  price: (float64) required price of the referred bond
+  initialFee: (float64) fee to charge on the beginning of the cashflow. Usually broker fee. Could be zero.
+  endingFee: (float64) fee to charge on the end of the cashflow. Usually broker fee. Could be zero.
+  
  

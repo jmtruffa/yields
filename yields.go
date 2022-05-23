@@ -129,7 +129,7 @@ func aprWrapper(c *gin.Context) {
 		if bond.Ticker == ticker {
 			//check if it's a zero coupon bond
 			if bond.Coupon != 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon must be zero"})
+				c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
 				return
 			}
 		}
