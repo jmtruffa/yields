@@ -20,6 +20,7 @@ type Fecha time.Time
 const DateFormat = "2006-01-02"
 
 var Bonds []Bond
+var Coef []CER
 
 // define data structure to hold the json data
 type Flujo struct {
@@ -37,6 +38,7 @@ type Bond struct {
 	Maturity  Fecha
 	Coupon    float64
 	Cashflow  []Flujo
+	Index     string
 }
 
 // embed methods in the custom struct to be able to use them
@@ -72,7 +74,7 @@ func (d Fecha) Format(s string) string {
 
 func main() {
 	// load json with all the bond's data and handle any errors
-	data, err := ioutil.ReadFile("./bonds.json")
+	data, err := ioutil.ReadFile("./bonds2.json")
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -82,6 +84,13 @@ func main() {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+	// Load the CER data into Coef
+	Coef, err = getCER()
+	if err != nil {
+		fmt.Println("Error getting CER: ", err)
+		return
+	}
+	fmt.Println("Total Records in file: ", len(Coef))
 
 	// start of the router and endpoints
 	router := gin.Default()
@@ -103,7 +112,6 @@ func aprWrapper(c *gin.Context) {
 	settlementDate, error := time.Parse("2006-01-02", settle)
 	if error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error in Settlement Date. ": "Invalid date format"})
-		//c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
 		return
 	}
 	priceTemp, _ := c.GetQuery("price")
@@ -124,9 +132,12 @@ func aprWrapper(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"Error in Ending Fee. ": error.Error()})
 		return
 	}
+
 	// Get the cashflow only if the ticker is a valid zero coupon bond
-	for _, bond := range Bonds {
+	index := 0
+	for i, bond := range Bonds {
 		if bond.Ticker == ticker {
+			index = i
 			//check if it's a zero coupon bond
 			if bond.Coupon != 0 {
 				c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
@@ -134,19 +145,37 @@ func aprWrapper(c *gin.Context) {
 			}
 		}
 	}
+	if index == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Ticker. ": "Ticker not found"})
+		return
+	}
+
 	cashFlow, error := getCashFlow(ticker)
 	if error != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
 		return
 	}
-	days := time.Time(cashFlow[0].Date).Sub(settlementDate).Hours() / 24
-	r := ((100-endingFee)/(price+initialFee) - 1) * (365 / days)
+	// adjust price if the bond is indexed.
+	ratio := 1.0
+	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
+		coef1, err := getCoefficient(Fecha(settlementDate), Coef)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
+			return
+		}
+		coef2, err := getCoefficient(Bonds[index].IssueDate, Coef)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
+			return
+		}
 
-	mduration, error := Mduration(cashFlow, r, settlementDate, initialFee, endingFee, price)
-	if error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
-		return
+		ratio = coef1 / coef2
+
 	}
+
+	days := time.Time(cashFlow[0].Date).Sub(settlementDate).Hours() / 24
+	r := ((100-endingFee)/((price+initialFee)/ratio) - 1) * (365 / days)
+	mduration := (days / 365) / (1 + r)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Yield":     r,
@@ -304,7 +333,7 @@ func yieldWrapper(c *gin.Context) {
 
 	r, error := Yield(cashFlow, price, settlementDate, initialFee, endingFee)
 	if error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation"})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation. Trying to calculate yield of an Index bond?"})
 		return
 	}
 
@@ -383,27 +412,6 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee flo
 
 	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, price)
 
-	/* for i, cf := range flow {
-		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
-			flow = flow[i:]
-			break
-		}
-	}
-
-	values := make([]float64, len(flow)+1)
-	dates := make([]time.Time, len(flow)+1)
-
-	// Add the first cashflow which is the price argument
-	values[0] = -price * (1 + initialFee)
-	dates[0] = settlementDate
-
-	// need to generate the arrays to pass as arguments to the function
-	for i := 1; i <= len(flow); i++ {
-		values[i] = flow[i-1].Amount
-		dates[i] = time.Time(flow[i-1].Date)
-	}
-	values[len(flow)] = values[len(flow)] * (1 - endingFee)
-	*/
 	rate, error := ScheduledInternalRateOfReturn(values, dates, 0.001)
 	if error != nil {
 		return 0, error
@@ -459,25 +467,6 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee floa
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
-
-	/* for i, cf := range flow {
-		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
-			flow = flow[i:]
-			break
-		}
-	}
-	values := make([]float64, len(flow)+1)
-	dates := make([]time.Time, len(flow)+1)
-
-	values[0] = 0
-	dates[0] = settlementDate
-
-	// need to generate the arrays to pass as arguments to the function
-	for i := 1; i <= len(flow); i++ {
-		values[i] = flow[i-1].Amount
-		dates[i] = time.Time(flow[i-1].Date)
-	}
-	values[len(flow)] = values[len(flow)] * (1 - endingFee) */
 
 	price, error := ScheduledNetPresentValue(rate, values, dates)
 	if error != nil {
@@ -575,3 +564,109 @@ func newton(guess float64, function func(float64) float64, derivative func(float
 		return newton(x, function, derivative, numIt+1)
 	}
 }
+
+/*
+func getCER() ([]CER, error) {
+	var saveFile bool
+	var downloadFile bool
+	var reader *csv.Reader
+	file := "/Users/juan/Google Drive/Mi unidad/analisis financieros/functions/data/CER.csv"
+	fileInfo, err := os.Stat(file)
+
+	if fileInfo == nil {
+		fmt.Println("No previous file found. Downloading...")
+		downloadFile = true
+		saveFile = true
+	} else {
+		modTime := fileInfo.ModTime()
+		// calculate the time difference
+		diff := time.Now().Sub(modTime)
+
+		if diff < 24*time.Hour {
+			// grab the file from disk
+			fmt.Println("The file is newer than 24 hours old. Grabbing from disk...")
+			res, error := os.Open(file)
+			if error != nil {
+				fmt.Println("Error opening CSV file: ", error)
+				return nil, error
+			}
+			defer res.Close()
+			reader = csv.NewReader(res)
+			saveFile = false
+			downloadFile = false
+
+		} else {
+			// download the file again
+			fmt.Println("The file is older than 24 hours. Downloading...")
+			downloadFile = true
+			saveFile = true
+		}
+	}
+	if downloadFile {
+		// download the file again
+
+		apiKey := os.Getenv("ALPHACAST_API_KEY")
+		url := "https://api.alphacast.io/datasets/8277/data?apiKey=" + apiKey + "&%24select=3290015&$format=csv"
+		dataset := http.Client{
+			Timeout: time.Second * 10,
+		}
+
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		res, getErr := dataset.Do(req)
+		if getErr != nil {
+			return nil, getErr
+		}
+
+		if res.Body != nil {
+			defer res.Body.Close()
+		}
+		reader = csv.NewReader(res.Body)
+		saveFile = true
+
+	}
+
+	reader.LazyQuotes = true
+	rows, err := reader.ReadAll()
+	if err != nil {
+		fmt.Println("Falla en el ReadAll. ", err)
+	}
+
+	var Coefs []CER
+
+	for i := 1; i < len(rows); i++ {
+		var Coef CER
+		date, _ := time.Parse(DateFormat, rows[i][0])
+		Coef.Date = Fecha(date)
+		//Coef.Country = rows[i][1]
+		Coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
+
+		Coefs = append(Coefs, Coef)
+	}
+
+	if saveFile == true {
+		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			fmt.Println("Error creating file: ", err)
+			return nil, err
+		}
+		defer f.Close()
+		w := csv.NewWriter(f)
+		w.WriteAll(rows)
+		w.Flush()
+	}
+
+	return Coefs, nil
+}
+
+/* func getCoefficient(date Fecha, coef []CER) (float64, error) {
+	for i := len(coef) - 1; i >= 0; i-- {
+		if coef[i].Date == date {
+			return coef[i].CER, nil
+		}
+	}
+	return 0, fmt.Errorf("CER not found for date %v", date)
+} */

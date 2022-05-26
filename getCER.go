@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-type Fecha time.Time
+/* type Fecha time.Time
 
-const DateFormat = "2006-01-02"
+const DateFormat = "2006-01-02" */
 
-func (d Fecha) MarshalJSON() ([]byte, error) {
+/* func (d Fecha) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + time.Time(d).Format(DateFormat) + `"`), nil
-}
+} */
 
 /*func (d *Fecha) UnmarshalJSON(p []byte) error {
 	var s string
@@ -30,10 +30,10 @@ func (d Fecha) MarshalJSON() ([]byte, error) {
 	return nil
 }*/
 
-func (d Fecha) String() string {
+/* func (d Fecha) String() string {
 	x, _ := d.MarshalJSON()
 	return string(x)
-}
+} */
 
 // struct to hold the index (CER) to adjust the face value of indexed bonds.
 type CER struct {
@@ -42,24 +42,22 @@ type CER struct {
 	CER float64
 }
 
-var Coef []CER
-
-func main() {
-	Coef, err := getCER()
-	if err != nil {
-		fmt.Println("Error getting CER: ", err)
-		return
-	}
-	fmt.Println("Total Records in file: ", len(Coef))
-	/*for i := len(Coef) - 10; i < len(Coef); i++ {
-		fmt.Println(Coef[i].Date.String(), Coef[i].Country, Coef[i].CER)
-	}*/
-	/*for id, line := range Coef {
+/* func main() {
+Coef, err := getCER()
+if err != nil {
+	fmt.Println("Error getting CER: ", err)
+	return
+}
+fmt.Println("Total Records in file: ", len(Coef))
+/*for i := len(Coef) - 10; i < len(Coef); i++ {
+	fmt.Println(Coef[i].Date.String(), Coef[i].Country, Coef[i].CER)
+}*/
+/*for id, line := range Coef {
 		fmt.Println(line.Date.String(), line.Country, line.CER)
 		if id > 10 {
 			break
 		}
-	}*/
+	}
 
 	date1, _ := time.Parse(DateFormat, "2018-01-01")
 	date2, _ := time.Parse(DateFormat, "2022-04-19")
@@ -87,7 +85,7 @@ func main() {
 	fmt.Println("Coef date2: ", coef2)
 	fmt.Println("Quotient: ", coef2/coef1)
 
-}
+} */
 
 func getCoefficient(date Fecha, coef []CER) (float64, error) {
 	for i := len(coef) - 1; i >= 0; i-- {
@@ -103,7 +101,7 @@ func getCER() ([]CER, error) {
 	var downloadFile bool
 	var reader *csv.Reader
 	file := "/Users/juan/Google Drive/Mi unidad/analisis financieros/functions/data/CER.csv"
-	fileInfo, err := os.Stat(file)
+	fileInfo, _ := os.Stat(file)
 
 	if fileInfo == nil {
 		fmt.Println("No previous file found. Downloading...")
@@ -167,18 +165,18 @@ func getCER() ([]CER, error) {
 		fmt.Println("Falla en el ReadAll. ", err)
 	}
 
-	var Coefs []CER
+	var coefs []CER
 
 	for i := 1; i < len(rows); i++ {
-		var Coef CER
+		var coef CER
 		date, _ := time.Parse(DateFormat, rows[i][0])
-		Coef.Date = Fecha(date)
+		coef.Date = Fecha(date)
 		//Coef.Country = rows[i][1]
-		Coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
+		coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
 		/*if err != nil {
 			fmt.Println("Falla en el ParseFloat. ", err, "registro: ", i)
 		}*/
-		Coefs = append(Coefs, Coef)
+		coefs = append(coefs, coef)
 	}
 
 	if saveFile == true {
@@ -193,5 +191,5 @@ func getCER() ([]CER, error) {
 		w.Flush()
 	}
 
-	return Coefs, nil
+	return coefs, nil
 }
