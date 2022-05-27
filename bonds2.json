@@ -1199,5 +1199,90 @@
             }
         ],
         "index": "CER"
+    },
+    {
+        "ID": "14",
+        "Ticker": "X29L2",
+        "IssueDate": "2021-08-05",
+        "Maturity": "2022-07-29",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2022-07-29",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "index": "CER"
+    }, 
+    {
+        "ID": "15",
+        "Ticker": "X16G2",
+        "IssueDate": "2021-11-30",
+        "Maturity": "2022-08-16",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2022-08-16",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "index": "CER"
+    },
+    {
+        "ID": "16",
+        "Ticker": "X21O2",
+        "IssueDate": "2021-10-21",
+        "Maturity": "2022-10-21",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2022-10-21",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "index": "CER"
+    },
+    {
+        "ID": "17",
+        "Ticker": "X16D2",
+        "IssueDate": "2022-03-15",
+        "Maturity": "2022-12-16",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2022-12-16",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "index": "CER"
+    },
+    {
+        "ID": "18",
+        "Ticker": "X20E3",
+        "IssueDate": "2022-01-31",
+        "Maturity": "2023-01-20",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-01-20",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "index": "CER"
     }
 ]

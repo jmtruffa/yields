@@ -9,83 +9,12 @@ import (
 	"time"
 )
 
-/* type Fecha time.Time
-
-const DateFormat = "2006-01-02" */
-
-/* func (d Fecha) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + time.Time(d).Format(DateFormat) + `"`), nil
-} */
-
-/*func (d *Fecha) UnmarshalJSON(p []byte) error {
-	var s string
-	if err := json.Unmarshal(p, &s); err != nil {
-		return err
-	}
-	t, err := time.Parse(DateFormat, s)
-	if err != nil {
-		return err
-	}
-	*d = Fecha(t)
-	return nil
-}*/
-
-/* func (d Fecha) String() string {
-	x, _ := d.MarshalJSON()
-	return string(x)
-} */
-
 // struct to hold the index (CER) to adjust the face value of indexed bonds.
 type CER struct {
 	Date Fecha
 	//Country string
 	CER float64
 }
-
-/* func main() {
-Coef, err := getCER()
-if err != nil {
-	fmt.Println("Error getting CER: ", err)
-	return
-}
-fmt.Println("Total Records in file: ", len(Coef))
-/*for i := len(Coef) - 10; i < len(Coef); i++ {
-	fmt.Println(Coef[i].Date.String(), Coef[i].Country, Coef[i].CER)
-}*/
-/*for id, line := range Coef {
-		fmt.Println(line.Date.String(), line.Country, line.CER)
-		if id > 10 {
-			break
-		}
-	}
-
-	date1, _ := time.Parse(DateFormat, "2018-01-01")
-	date2, _ := time.Parse(DateFormat, "2022-04-19")
-
-	date1Parsed := Fecha(date1)
-	date2Parsed := Fecha(date2)
-
-	fmt.Println("Date1: ", date1Parsed)
-	fmt.Println("Date2: ", date2Parsed)
-
-	coef1, err := getCoefficient(date1Parsed, Coef)
-	if err != nil {
-		fmt.Println("Error getting CER with coefficient 1: ", err)
-	}
-	coef2, err := getCoefficient(date2Parsed, Coef)
-	if err != nil {
-		fmt.Println("Error getting CER with coefficient 2: ", err)
-	}
-
-	if coef1 == 0 || coef2 == 0 {
-		fmt.Println("Cant obtain quotient since one (or both) coefs is (are) zero: ", err)
-	}
-
-	fmt.Println("Coef date1: ", coef1)
-	fmt.Println("Coef date2: ", coef2)
-	fmt.Println("Quotient: ", coef2/coef1)
-
-} */
 
 func getCoefficient(date Fecha, coef []CER) (float64, error) {
 	for i := len(coef) - 1; i >= 0; i-- {
@@ -110,7 +39,7 @@ func getCER() ([]CER, error) {
 	} else {
 		modTime := fileInfo.ModTime()
 		// calculate the time difference
-		diff := time.Now().Sub(modTime)
+		diff := time.Since(modTime)
 
 		if diff < 24*time.Hour {
 			// grab the file from disk
@@ -171,15 +100,11 @@ func getCER() ([]CER, error) {
 		var coef CER
 		date, _ := time.Parse(DateFormat, rows[i][0])
 		coef.Date = Fecha(date)
-		//Coef.Country = rows[i][1]
 		coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
-		/*if err != nil {
-			fmt.Println("Falla en el ParseFloat. ", err, "registro: ", i)
-		}*/
 		coefs = append(coefs, coef)
 	}
 
-	if saveFile == true {
+	if saveFile {
 		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			fmt.Println("Error creating file: ", err)

@@ -61,6 +61,7 @@ This API implements these functions from /alpeb/go-finance/:
  6.- apr
 
  Idem 1 but returns in APR instead of effective yield. Works only with zero coupon bonds. The endpoint checks if the requested bond is zerocoupon.
+ If bonds is index adjusted, it will look for the coefficientes of IssueDate, settlementDate and calculate a ratio. Works only with CER (http://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables_datos.asp?serie=3540&detalle=CER%A0(Base%202.2.2002=1))
 
  Value: (float64) Return APR of the bond given its price and cashflow
       (float64) Return modified duration of the bond.
