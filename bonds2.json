@@ -147,7 +147,8 @@
                 "Amount": 8.07
             }
         ],
-        "Index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "2",
@@ -297,7 +298,8 @@
                 "Amount": 8.07
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "3",
@@ -314,7 +316,8 @@
                 "Amount": 100
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "4",
@@ -331,7 +334,8 @@
                 "Amount": 100
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "5",
@@ -348,7 +352,8 @@
                 "Amount": 100
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "6",
@@ -365,7 +370,8 @@
                 "Amount": 100
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "7",
@@ -382,7 +388,8 @@
                 "Amount": 100
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "8",
@@ -399,7 +406,8 @@
                 "Amount": 100
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "9",
@@ -535,7 +543,8 @@
                 "Amount": 10.05
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "10",
@@ -671,7 +680,8 @@
                 "Amount": 10.05
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "11",
@@ -926,7 +936,8 @@
                 "Amount": 4.66
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "12",
@@ -1181,7 +1192,8 @@
                 "Amount": 4.66
             }
         ],
-        "index": ""
+        "Index": "",
+        "Offset": ""
     },
     {
         "ID": "13",
@@ -1198,7 +1210,8 @@
                 "Amount": 100
             }
         ],
-        "index": "CER"
+        "Index": "CER",
+        "Offset": -10
     },
     {
         "ID": "14",
@@ -1215,8 +1228,9 @@
                 "Amount": 100
             }
         ],
-        "index": "CER"
-    }, 
+        "Index": "CER",
+        "Offset": -10
+    },
     {
         "ID": "15",
         "Ticker": "X16G2",
@@ -1232,7 +1246,8 @@
                 "Amount": 100
             }
         ],
-        "index": "CER"
+        "Index": "CER",
+        "Offset": -10
     },
     {
         "ID": "16",
@@ -1249,7 +1264,8 @@
                 "Amount": 100
             }
         ],
-        "index": "CER"
+        "Index": "CER",
+        "Offset": -10
     },
     {
         "ID": "17",
@@ -1266,7 +1282,8 @@
                 "Amount": 100
             }
         ],
-        "index": "CER"
+        "Index": "CER",
+        "Offset": -10
     },
     {
         "ID": "18",
@@ -1283,6 +1300,300 @@
                 "Amount": 100
             }
         ],
-        "index": "CER"
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "19",
+        "Ticker": "X17F3",
+        "IssueDate": "2022-03-02",
+        "Maturity": "2023-02-17",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-02-17",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "20",
+        "Ticker": "X21A3",
+        "IssueDate": "2022-03-31",
+        "Maturity": "2023-04-21",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-04-21",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "21",
+        "Ticker": "X19Y3",
+        "IssueDate": "2022-04-29",
+        "Maturity": "2023-05-19",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-05-19",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "22",
+        "Ticker": "S31O2",
+        "IssueDate": "2022-05-23",
+        "Maturity": "2022-10-31",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2022-10-31",
+                "Rate": 0,
+                "Amort": 0,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": ""
+    },
+    {
+        "ID": "23",
+        "Ticker": "GD35",
+        "IssueDate": "2020-09-04",
+        "Maturity": "2035-07-09",
+        "Coupon": 0.00125,
+        "Cashflow": [
+            {
+                "Date": "2021-01-09",
+                "Rate": 0.00125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0
+            },
+            {
+                "Date": "2021-07-09",
+                "Rate": 0.00125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0
+            },
+            {
+                "Date": "2022-01-09",
+                "Rate": 0.01125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0
+            },
+            {
+                "Date": "2022-07-09",
+                "Rate": 0.01125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.56
+            },
+            {
+                "Date": "2023-01-09",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2023-07-09",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2024-01-09",
+                "Rate": 0.03625,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.81
+            },
+            {
+                "Date": "2024-07-09",
+                "Rate": 0.03625,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.81
+            },
+            {
+                "Date": "2025-01-09",
+                "Rate": 0.04125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.06
+            },
+            {
+                "Date": "2025-07-09",
+                "Rate": 0.04125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.06
+            },
+            {
+                "Date": "2026-01-09",
+                "Rate": 0.04125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.06
+            },
+            {
+                "Date": "2026-07-09",
+                "Rate": 0.04125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.06
+            },
+            {
+                "Date": "2027-01-09",
+                "Rate": 0.04125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.06
+            },
+            {
+                "Date": "2027-07-09",
+                "Rate": 0.04125,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.06
+            },
+            {
+                "Date": "2028-01-09",
+                "Rate": 0.0475,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.38
+            },
+            {
+                "Date": "2028-07-09",
+                "Rate": 0.0475,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.38
+            },
+            {
+                "Date": "2029-01-09",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2029-07-09",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2030-01-09",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2030-07-09",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2031-01-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 90,
+                "Amount": 12.5
+            },
+            {
+                "Date": "2031-07-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 80,
+                "Amount": 12.25
+            },
+            {
+                "Date": "2032-01-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 70,
+                "Amount": 12
+            },
+            {
+                "Date": "2032-07-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 60,
+                "Amount": 11.75
+            },
+            {
+                "Date": "2033-01-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 50,
+                "Amount": 11.5
+            },
+            {
+                "Date": "2033-07-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 40,
+                "Amount": 11.25
+            },
+            {
+                "Date": "2034-01-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 30,
+                "Amount": 11
+            },
+            {
+                "Date": "2034-07-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 20,
+                "Amount": 10.75
+            },
+            {
+                "Date": "2035-01-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 10,
+                "Amount": 10.5
+            },
+            {
+                "Date": "2035-07-09",
+                "Rate": 0.05,
+                "Amort": 10,
+                "Residual": 0,
+                "Amount": 10.25
+            }
+        ],
+        "Index": "",
+        "Offset": ""
     }
 ]

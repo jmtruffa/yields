@@ -12,12 +12,22 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rickar/cal/v2"
+	"github.com/rickar/cal/v2/ar"
 )
 
 // to embed the time in a custom format to parse the dates that come from the json
 type Fecha time.Time
 
 const DateFormat = "2006-01-02"
+
+var EasternsDay2 = &cal.Holiday{
+	Name:   "Viernes Santo",
+	Type:   cal.ObservancePublic,
+	Offset: -2,
+	Func:   cal.CalcEasterOffset,
+}
+var calendar = cal.NewBusinessCalendar()
 
 var Bonds []Bond
 var Coef []CER
@@ -39,6 +49,7 @@ type Bond struct {
 	Coupon    float64
 	Cashflow  []Flujo
 	Index     string
+	Offset    int // Indexed bonds uses offset as date lookback period for the Index. In CER adjusted bonds this is set to 10 working days.
 }
 
 // embed methods in the custom struct to be able to use them
@@ -73,6 +84,8 @@ func (d Fecha) Format(s string) string {
 }
 
 func main() {
+	// SetUpCalendar creates the calendar and set ups the holidays for Argentina.
+	SetUpCalendar()
 	// load json with all the bond's data and handle any errors
 	data, err := ioutil.ReadFile("./bonds2.json")
 	if err != nil {
@@ -155,19 +168,26 @@ func aprWrapper(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
 		return
 	}
-	// adjust price if the bond is indexed.
+	// adjust price, if the bond is indexed, by using the ratio calculated by dividing the index of settlementDate by the index of IssueDate.
+	// There's an offset variable to adjust the lookback period for the index.
+
 	ratio := 1.0
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
-		coef1, err := getCoefficient(Fecha(settlementDate), Coef)
+
+		// offset := Bonds[index].Offset
+		offset := -10
+
+		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		coef2, err := getCoefficient(Bonds[index].IssueDate, Coef)
+		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
+		fmt.Println("coef1: ", coef1, "coef2: ", coef2)
 
 		ratio = coef1 / coef2
 
@@ -670,3 +690,25 @@ func getCER() ([]CER, error) {
 	}
 	return 0, fmt.Errorf("CER not found for date %v", date)
 } */
+
+func SetUpCalendar() {
+	calendar.AddHoliday(
+		ar.NewYear,
+		ar.IndependenceDay,
+		ar.LaborDay,
+		ar.ChristmasDay,
+		ar.CarnivalDay1,
+		ar.CarnivalDay2,
+		ar.TruethDay,
+		ar.MalvinasVeterans,
+		ar.EasternsDay,
+		EasternsDay2,
+		ar.RevolutionDay,
+		ar.GuemesDay,
+		ar.SanMartinDay,
+		ar.DiversityDay,
+		ar.SovereigntyDay,
+		ar.VirgenDay,
+		ar.CensoNacional2022,
+	)
+}
