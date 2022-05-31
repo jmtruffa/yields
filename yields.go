@@ -27,6 +27,27 @@ var EasternsDay2 = &cal.Holiday{
 	Offset: -2,
 	Func:   cal.CalcEasterOffset,
 }
+
+var ChristmasDayEve = &cal.Holiday{
+	Name:      "24 de diciembre",
+	Type:      cal.ObservancePublic,
+	StartYear: 2021,
+	EndYear:   2022,
+	Month:     time.December,
+	Day:       24,
+	Func:      cal.CalcDayOfMonth,
+}
+
+var LastDayYearEve = &cal.Holiday{
+	Name:      "30 de diciembre",
+	Type:      cal.ObservancePublic,
+	StartYear: 2021,
+	EndYear:   2022,
+	Month:     time.December,
+	Day:       30,
+	Func:      cal.CalcDayOfMonth,
+}
+
 var calendar = cal.NewBusinessCalendar()
 
 var Bonds []Bond
@@ -147,27 +168,39 @@ func aprWrapper(c *gin.Context) {
 	}
 
 	// Get the cashflow only if the ticker is a valid zero coupon bond
-	index := 0
-	for i, bond := range Bonds {
-		if bond.Ticker == ticker {
-			index = i
-			//check if it's a zero coupon bond
-			if bond.Coupon != 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
-				return
-			}
-		}
-	}
-	if index == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Ticker. ": "Ticker not found"})
-		return
-	}
 
-	cashFlow, error := getCashFlow(ticker)
+	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
 		return
+	} else if Bonds[index].Coupon != 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
+		return
 	}
+
+	/*
+		index := 0
+		for i, bond := range Bonds {
+			if bond.Ticker == ticker {
+				index = i
+				//check if it's a zero coupon bond
+				if bond.Coupon != 0 {
+					c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
+					return
+				}
+			}
+		}
+		if index == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"Error in Ticker. ": "Ticker not found"})
+			return
+		}
+
+		cashFlow, index, error := getCashFlow(ticker)
+		if error != nil {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
+			return
+		} */
+
 	// adjust price, if the bond is indexed, by using the ratio calculated by dividing the index of settlementDate by the index of IssueDate.
 	// There's an offset variable to adjust the lookback period for the index.
 
@@ -187,7 +220,6 @@ func aprWrapper(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		fmt.Println("coef1: ", coef1, "coef2: ", coef2)
 
 		ratio = coef1 / coef2
 
@@ -275,7 +307,7 @@ func scheduleWrapper(c *gin.Context) {
 		})
 		return
 	}
-	cashFlow, err := getCashFlow(ticker)
+	cashFlow, _, err := getCashFlow(ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "ticker not found",
@@ -306,13 +338,13 @@ func getScheduleOfPayments(cashFlow *[]Flujo, settlementDate *time.Time) []Flujo
 	return schedule
 }
 
-func getCashFlow(ticker string) ([]Flujo, error) {
-	for _, bond := range Bonds {
+func getCashFlow(ticker string) ([]Flujo, int, error) {
+	for i, bond := range Bonds {
 		if bond.Ticker == ticker {
-			return bond.Cashflow, nil
+			return bond.Cashflow, i, nil
 		}
 	}
-	return nil, errors.New("Ticker Not Found")
+	return nil, -1, errors.New("Ticker Not Found")
 }
 
 func yieldWrapper(c *gin.Context) {
@@ -345,15 +377,42 @@ func yieldWrapper(c *gin.Context) {
 		return
 	}
 
-	cashFlow, error := getCashFlow(ticker)
+	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
 		return
 	}
 
+	// adjust price, if the bond is indexed, by using the ratio calculated by dividing the index of settlementDate by the index of IssueDate.
+	// There's an offset variable to adjust the lookback period for the index.
+
+	ratio := 1.0
+	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
+
+		// offset := Bonds[index].Offset
+		offset := -10
+
+		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
+			return
+		}
+		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), Coef)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
+			return
+		}
+		//fmt.Println("coef1: ", coef1, "coef2: ", coef2)
+
+		ratio = coef1 / coef2
+
+	}
+
+	price = price / ratio
+
 	r, error := Yield(cashFlow, price, settlementDate, initialFee, endingFee)
 	if error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation. Trying to calculate yield of an Index bond?"})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation."})
 		return
 	}
 
@@ -400,7 +459,7 @@ func priceWrapper(c *gin.Context) {
 		return
 	}
 
-	cashFlow, error := getCashFlow(ticker)
+	cashFlow, _, error := getCashFlow(ticker)
 	if error != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
 		return
@@ -710,5 +769,7 @@ func SetUpCalendar() {
 		ar.SovereigntyDay,
 		ar.VirgenDay,
 		ar.CensoNacional2022,
+		ChristmasDayEve,
+		LastDayYearEve,
 	)
 }
