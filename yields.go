@@ -178,29 +178,6 @@ func aprWrapper(c *gin.Context) {
 		return
 	}
 
-	/*
-		index := 0
-		for i, bond := range Bonds {
-			if bond.Ticker == ticker {
-				index = i
-				//check if it's a zero coupon bond
-				if bond.Coupon != 0 {
-					c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
-					return
-				}
-			}
-		}
-		if index == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"Error in Ticker. ": "Ticker not found"})
-			return
-		}
-
-		cashFlow, index, error := getCashFlow(ticker)
-		if error != nil {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
-			return
-		} */
-
 	// adjust price, if the bond is indexed, by using the ratio calculated by dividing the index of settlementDate by the index of IssueDate.
 	// There's an offset variable to adjust the lookback period for the index.
 
@@ -209,6 +186,8 @@ func aprWrapper(c *gin.Context) {
 
 		// offset := Bonds[index].Offset
 		offset := -10
+
+		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
 		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
 		if err != nil {
@@ -226,7 +205,8 @@ func aprWrapper(c *gin.Context) {
 	}
 
 	days := time.Time(cashFlow[0].Date).Sub(settlementDate).Hours() / 24
-	r := ((100-endingFee)/((price+initialFee)/ratio) - 1) * (365 / days)
+	fmt.Println("Días: ", days)
+	r := ((100*(1-endingFee))/((price*(1+initialFee))/ratio) - 1) * (365 / days)
 	mduration := (days / 365) / (1 + r)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -542,6 +522,7 @@ func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, 
 	return values, dates
 
 }
+
 func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
