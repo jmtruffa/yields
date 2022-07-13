@@ -48,6 +48,16 @@ var LastDayYearEve = &cal.Holiday{
 	Func:      cal.CalcDayOfMonth,
 }
 
+var BelgranoDay = &cal.Holiday{
+	Name:      "Aniversario paso a la inmortalidad del General Juan Manuel Belgrano",
+	Type:      cal.ObservancePublic,
+	StartYear: 2022,
+	EndYear:   2022,
+	Month:     time.June,
+	Day:       20,
+	Func:      cal.CalcDayOfMonth,
+}
+
 var calendar = cal.NewBusinessCalendar()
 
 var Bonds []Bond
@@ -184,8 +194,8 @@ func aprWrapper(c *gin.Context) {
 	ratio := 1.0
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
-		// offset := Bonds[index].Offset
-		offset := -10
+		offset := Bonds[index].Offset
+		//offset := -10
 
 		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
@@ -369,8 +379,10 @@ func yieldWrapper(c *gin.Context) {
 	ratio := 1.0
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
-		// offset := Bonds[index].Offset
-		offset := -10
+		offset := Bonds[index].Offset
+		//offset := -10
+
+		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
 		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
 		if err != nil {
@@ -439,12 +451,35 @@ func priceWrapper(c *gin.Context) {
 		return
 	}
 
-	cashFlow, _, error := getCashFlow(ticker)
+	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
 		return
 	}
+	// debería poner la obtención de los coefs
+	ratio := 1.0
+	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
+		offset := Bonds[index].Offset
+		//offset := -10
+
+		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
+
+		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
+			return
+		}
+		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), Coef)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
+			return
+		}
+		//fmt.Println("coef1: ", coef1, "coef2: ", coef2)
+
+		ratio = coef1 / coef2
+
+	}
 	p, error := Price(cashFlow, rate, settlementDate, initialFee, endingFee)
 	if error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Price calculation"})
@@ -456,6 +491,8 @@ func priceWrapper(c *gin.Context) {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
 		return
 	}
+
+	p = p * ratio
 
 	c.JSON(http.StatusOK, gin.H{
 		"Price":     p,
@@ -752,5 +789,7 @@ func SetUpCalendar() {
 		ar.CensoNacional2022,
 		ChristmasDayEve,
 		LastDayYearEve,
+		BelgranoDay,
+		ar.BelgranoDay,
 	)
 }

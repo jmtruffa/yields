@@ -148,7 +148,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "2",
@@ -299,7 +299,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "3",
@@ -317,7 +317,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "4",
@@ -335,7 +335,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "5",
@@ -353,7 +353,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "6",
@@ -371,7 +371,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "7",
@@ -389,7 +389,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "8",
@@ -407,7 +407,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "9",
@@ -544,7 +544,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "10",
@@ -681,7 +681,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "11",
@@ -937,7 +937,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "12",
@@ -1193,7 +1193,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "13",
@@ -1373,7 +1373,7 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
     },
     {
         "ID": "23",
@@ -1594,6 +1594,602 @@
             }
         ],
         "Index": "",
-        "Offset": ""
+        "Offset": 0
+    },
+    {
+        "ID": "24",
+        "Ticker": "T2X2",
+        "IssueDate": "2020-05-20",
+        "Maturity": "2022-09-20",
+        "Coupon": 0.013,
+        "Cashflow": [
+            {
+                "Date": "2020-09-20",
+                "Rate": 0.00130,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.43
+            },
+            {
+                "Date": "2021-03-20",
+                "Rate": 0.00130,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.65
+            },
+            {
+                "Date": "2021-09-20",
+                "Rate": 0.00130,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.65
+            },
+            {
+                "Date": "2022-03-20",
+                "Rate": 0.00130,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.65
+            },
+            {
+                "Date": "2022-09-20",
+                "Rate": 0.00130,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100.65
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "25",
+        "Ticker": "TX23",
+        "IssueDate": "2020-03-25",
+        "Maturity": "2023-03-25",
+        "Coupon": 0.014,
+        "Cashflow": [
+            {
+                "Date": "2020-03-25",
+                "Rate": 0.00140,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.70
+            },
+            {
+                "Date": "2021-09-25",
+                "Rate": 0.00140,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.70
+            },
+            {
+                "Date": "2021-03-25",
+                "Rate": 0.00140,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.70
+            },
+            {
+                "Date": "2021-09-25",
+                "Rate": 0.00140,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.70
+            },
+            {
+                "Date": "2022-03-25",
+                "Rate": 0.00140,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.70
+            },
+            {
+                "Date": "2022-09-25",
+                "Rate": 0.00140,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.70
+            },
+            {
+                "Date": "2023-03-25",
+                "Rate": 0.00140,
+                "Amort": 100,
+                "Residual": 100,
+                "Amount": 100.70
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "26",
+        "Ticker": "T2X3",
+        "IssueDate": "2020-08-13",
+        "Maturity": "2023-08-13",
+        "Coupon": 0.0145,
+        "Cashflow": [
+            {
+                "Date": "2021-08-13",
+                "Rate": 0.00145,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.73
+            },
+            {
+                "Date": "2022-02-13",
+                "Rate": 0.00145,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.73
+            },
+            {
+                "Date": "2022-08-13",
+                "Rate": 0.00145,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.73
+            },
+            {
+                "Date": "2023-02-13",
+                "Rate": 0.00145,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.73
+            },
+            {
+                "Date": "2023-08-13",
+                "Rate": 0.00145,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100.73
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "27",
+        "Ticker": "TC23",
+        "IssueDate": "2018-03-06",
+        "Maturity": "2023-03-06",
+        "Coupon": 0.4,
+        "Cashflow": [
+            {
+                "Date": "2018-09-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2019-03-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2019-09-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2020-03-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2020-09-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2021-03-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2021-09-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2022-03-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2022-09-06",
+                "Rate": 0.04,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2
+            },
+            {
+                "Date": "2023-03-06",
+                "Rate": 0.04,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 102
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "28",
+        "Ticker": "TX24",
+        "IssueDate": "2020-03-25",
+        "Maturity": "2024-03-25",
+        "Coupon": 0.015,
+        "Cashflow": [
+            {
+                "Date": "2020-09-25",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2021-03-25",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2021-09-25",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2022-03-25",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2022-09-25",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2023-03-25",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2023-09-25",
+                "Rate": 0.015,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2024-03-25",
+                "Rate": 0.015,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100.75
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "29",
+        "Ticker": "T2X4",
+        "IssueDate": "2021-02-26",
+        "Maturity": "2024-07-26",
+        "Coupon": 0.0155,
+        "Cashflow": [
+            {
+                "Date": "2021-07-26",
+                "Rate": 0.01550,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.65
+            },
+            {
+                "Date": "2022-01-26",
+                "Rate": 0.0155,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.78
+            },
+            {
+                "Date": "2022-07-26",
+                "Rate": 0.0155,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.78
+            },
+            {
+                "Date": "2023-01-26",
+                "Rate": 0.0155,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.78
+            },
+            {
+                "Date": "2023-07-26",
+                "Rate": 0.0155,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.78
+            },
+            {
+                "Date": "2024-01-26",
+                "Rate": 0.0155,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.78
+            },
+            {
+                "Date": "2024-07-26",
+                "Rate": 0.0155,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100.78
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "30",
+        "Ticker": "TX26",
+        "IssueDate": "2020-09-04",
+        "Maturity": "2026-11-04",
+        "Coupon": 0.02,
+        "Cashflow": [
+            {
+                "Date": "2021-05-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.33
+            },
+            {
+                "Date": "2021-11-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2022-05-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2022-11-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2023-05-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2023-11-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2024-05-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2024-11-04",
+                "Rate": 0.02,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2025-05-04",
+                "Rate": 0.02,
+                "Amort": 25,
+                "Residual": 75,
+                "Amount": 26
+            },
+            {
+                "Date": "2025-11-04",
+                "Rate": 0.02,
+                "Amort": 25,
+                "Residual": 50,
+                "Amount": 25.75
+            },
+            {
+                "Date": "2026-05-04",
+                "Rate": 0.02,
+                "Amort": 25,
+                "Residual": 25,
+                "Amount": 25.50
+            },
+            {
+                "Date": "2026-11-04",
+                "Rate": 0.02,
+                "Amort": 25,
+                "Residual": 0,
+                "Amount": 25.25
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "31",
+        "Ticker": "TX28",
+        "IssueDate": "2020-09-04",
+        "Maturity": "2028-11-04",
+        "Coupon": 0.0225,
+        "Cashflow": [
+            {
+                "Date": "2021-05-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.50
+            },
+            {
+                "Date": "2021-11-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.13
+            },
+            {
+                "Date": "2022-05-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.13
+            },
+            {
+                "Date": "2022-11-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.13
+            },
+            {
+                "Date": "2023-05-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.13
+            },
+            {
+                "Date": "2023-11-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.13
+            },
+            {
+                "Date": "2024-05-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.13
+            },
+            {
+                "Date": "2024-11-04",
+                "Rate": 0.0225,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.13
+            },
+            {
+                "Date": "2025-05-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 87.50,
+                "Amount": 13.63
+            },
+            {
+                "Date": "2025-11-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 75,
+                "Amount": 13.48
+            },
+            {
+                "Date": "2026-05-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 62.5,
+                "Amount": 13.34
+            },
+            {
+                "Date": "2026-11-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 50,
+                "Amount": 13.20
+            },
+            {
+                "Date": "2027-05-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 37.50,
+                "Amount": 13.06
+            },
+            {
+                "Date": "2027-11-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 25,
+                "Amount": 12.92
+            },
+            {
+                "Date": "2028-05-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 12.50,
+                "Amount": 12.78
+            },
+            {
+                "Date": "2028-11-04",
+                "Rate": 0.0225,
+                "Amort": 12.50,
+                "Residual": 0,
+                "Amount": 12.64
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "32",
+        "Ticker": "X23N2",
+        "IssueDate": "2022-06-30",
+        "Maturity": "2022-11-23",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2022-11-23",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
     }
 ]
