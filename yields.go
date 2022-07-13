@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jasonlvhit/gocron"
 	"github.com/rickar/cal/v2"
 	"github.com/rickar/cal/v2/ar"
 )
@@ -114,9 +115,15 @@ func (d Fecha) Format(s string) string {
 	return time.Time(d).Format(s)
 }
 
+func executeCronJob() {
+	gocron.Every(24).Hours().Do(getCER)
+	<-gocron.Start()
+}
+
 func main() {
 	// SetUpCalendar creates the calendar and set ups the holidays for Argentina.
 	SetUpCalendar()
+	go executeCronJob()
 	// load json with all the bond's data and handle any errors
 	data, err := ioutil.ReadFile("./bonds2.json")
 	if err != nil {
