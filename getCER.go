@@ -41,9 +41,9 @@ func getCER() ([]CER, error) {
 		// calculate the time difference
 		diff := time.Since(modTime)
 
-		if diff < 24*time.Hour {
+		if diff < 120*time.Hour { // 5 days -> 24 * 5
 			// grab the file from disk
-			fmt.Println("The file is newer than 24 hours old. Grabbing from disk...")
+			fmt.Println("The file is newer than 5 days old. Grabbing from disk...")
 			res, error := os.Open(file)
 			if error != nil {
 				fmt.Println("Error opening CSV file: ", error)
@@ -56,7 +56,7 @@ func getCER() ([]CER, error) {
 
 		} else {
 			// download the file again
-			fmt.Println("The file is older than 24 hours. Downloading...")
+			fmt.Println("The file is older than 5 days. Downloading...")
 			downloadFile = true
 			saveFile = true
 		}
@@ -64,7 +64,9 @@ func getCER() ([]CER, error) {
 	if downloadFile {
 		// download the file again
 
-		apiKey := os.Getenv("ALPHACAST_API_KEY")
+		//apiKey := os.Getenv("ALPHACAST_API_KEY")
+		apiKey := "ak_PrhTBPgElKK60m8iWqqI"
+
 		url := "https://api.alphacast.io/datasets/8277/data?apiKey=" + apiKey + "&%24select=3290015&$format=csv"
 		dataset := http.Client{
 			Timeout: time.Second * 10,
@@ -96,14 +98,6 @@ func getCER() ([]CER, error) {
 
 	var coefs []CER
 
-	for i := 1; i < len(rows); i++ {
-		var coef CER
-		date, _ := time.Parse(DateFormat, rows[i][0])
-		coef.Date = Fecha(date)
-		coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
-		coefs = append(coefs, coef)
-	}
-
 	if saveFile {
 		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
@@ -114,6 +108,14 @@ func getCER() ([]CER, error) {
 		w := csv.NewWriter(f)
 		w.WriteAll(rows)
 		w.Flush()
+	}
+
+	for i := 1; i < len(rows); i++ {
+		var coef CER
+		date, _ := time.Parse(DateFormat, rows[i][0])
+		coef.Date = Fecha(date)
+		coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
+		coefs = append(coefs, coef)
 	}
 
 	return coefs, nil
