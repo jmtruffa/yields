@@ -13,53 +13,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jasonlvhit/gocron"
-	"github.com/rickar/cal/v2"
-	"github.com/rickar/cal/v2/ar"
 )
 
 // to embed the time in a custom format to parse the dates that come from the json
 type Fecha time.Time
 
 const DateFormat = "2006-01-02"
-
-var EasternsDay2 = &cal.Holiday{
-	Name:   "Viernes Santo",
-	Type:   cal.ObservancePublic,
-	Offset: -2,
-	Func:   cal.CalcEasterOffset,
-}
-
-var ChristmasDayEve = &cal.Holiday{
-	Name:      "24 de diciembre",
-	Type:      cal.ObservancePublic,
-	StartYear: 2021,
-	EndYear:   2022,
-	Month:     time.December,
-	Day:       24,
-	Func:      cal.CalcDayOfMonth,
-}
-
-var LastDayYearEve = &cal.Holiday{
-	Name:      "30 de diciembre",
-	Type:      cal.ObservancePublic,
-	StartYear: 2021,
-	EndYear:   2022,
-	Month:     time.December,
-	Day:       30,
-	Func:      cal.CalcDayOfMonth,
-}
-
-var BelgranoDay = &cal.Holiday{
-	Name:      "Aniversario paso a la inmortalidad del General Juan Manuel Belgrano",
-	Type:      cal.ObservancePublic,
-	StartYear: 2022,
-	EndYear:   2022,
-	Month:     time.June,
-	Day:       20,
-	Func:      cal.CalcDayOfMonth,
-}
-
-var calendar = cal.NewBusinessCalendar()
 
 var Bonds []Bond
 var Coef []CER
@@ -667,30 +626,4 @@ func newton(guess float64, function func(float64) float64, derivative func(float
 	} else {
 		return newton(x, function, derivative, numIt+1)
 	}
-}
-
-func SetUpCalendar() {
-	calendar.AddHoliday(
-		ar.NewYear,
-		ar.IndependenceDay,
-		ar.LaborDay,
-		ar.ChristmasDay,
-		ar.CarnivalDay1,
-		ar.CarnivalDay2,
-		ar.TruethDay,
-		ar.MalvinasVeterans,
-		ar.EasternsDay,
-		EasternsDay2,
-		ar.RevolutionDay,
-		ar.GuemesDay,
-		ar.SanMartinDay,
-		ar.DiversityDay,
-		ar.SovereigntyDay,
-		ar.VirgenDay,
-		ar.CensoNacional2022,
-		ChristmasDayEve,
-		LastDayYearEve,
-		BelgranoDay,
-		ar.BelgranoDay,
-	)
 }
