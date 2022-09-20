@@ -2708,5 +2708,59 @@
         ],
         "Index": "",
         "Offset": 0
+    },
+    {
+        "ID": "38",
+        "Ticker": "S16D2",
+        "IssueDate": "2022-08-31",
+        "Maturity": "2022-12-16",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2022-12-16",
+                "Rate": 0,
+                "Amort": 0,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "39",
+        "Ticker": "S31E3",
+        "IssueDate": "2022-08-31",
+        "Maturity": "2023-01-31",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-01-31",
+                "Rate": 0,
+                "Amort": 0,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "40",
+        "Ticker": "X16J3",
+        "IssueDate": "2022-08-31",
+        "Maturity": "2023-06-16",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-06-16",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10   
     }
 ]
