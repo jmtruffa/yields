@@ -84,7 +84,7 @@ func main() {
 	SetUpCalendar()
 	go executeCronJob() // this will make the cron run in the background.
 	// load json with all the bond's data and handle any errors
-	data, err := ioutil.ReadFile("./bonds2.json")
+	data, err := ioutil.ReadFile("./bonds.json")
 	if err != nil {
 		fmt.Print(err)
 	}

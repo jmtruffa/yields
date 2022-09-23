@@ -99,7 +99,7 @@ func getCER() ([]CER, error) {
 	var coefs []CER
 
 	if saveFile {
-		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			fmt.Println("Error creating file: ", err)
 			return nil, err
