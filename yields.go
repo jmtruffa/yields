@@ -95,7 +95,8 @@ func main() {
 		fmt.Println("error:", err)
 	}
 	// Load the CER data into Coef
-	Coef, err = getCER()
+	getCER()
+	//Coef, err = getCER()
 	if err != nil {
 		fmt.Println("Error getting CER: ", err)
 		return

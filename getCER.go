@@ -25,7 +25,10 @@ func getCoefficient(date Fecha, coef []CER) (float64, error) {
 	return 0, fmt.Errorf("CER not found for date %v", date)
 }
 
-func getCER() ([]CER, error) {
+// need to convert the getCER function into one that works with pointers because the cron does does not execute over a variable.
+// It's just a funciton call
+// Need to define Coef as a global variable
+func getCER() error { // este era el primer parámetro []CER
 	var saveFile bool
 	var downloadFile bool
 	var reader *csv.Reader
@@ -47,7 +50,7 @@ func getCER() ([]CER, error) {
 			res, error := os.Open(file)
 			if error != nil {
 				fmt.Println("Error opening CSV file: ", error)
-				return nil, error
+				return error // le saqué nil como primer parámtro
 			}
 			defer res.Close()
 			reader = csv.NewReader(res)
@@ -74,12 +77,12 @@ func getCER() ([]CER, error) {
 
 		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
-			return nil, err
+			return err //le saqué nil como primer parámtro
 		}
 
 		res, getErr := dataset.Do(req)
 		if getErr != nil {
-			return nil, getErr
+			return getErr //le saqué nil como primer parámtro
 		}
 
 		if res.Body != nil {
@@ -96,13 +99,13 @@ func getCER() ([]CER, error) {
 		fmt.Println("Falla en el ReadAll. ", err)
 	}
 
-	var coefs []CER
+	//var coefs []CER
 
 	if saveFile {
 		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			fmt.Println("Error creating file: ", err)
-			return nil, err
+			return err //le saqué nil como primer parámetro
 		}
 		defer f.Close()
 		w := csv.NewWriter(f)
@@ -115,8 +118,8 @@ func getCER() ([]CER, error) {
 		date, _ := time.Parse(DateFormat, rows[i][0])
 		coef.Date = Fecha(date)
 		coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
-		coefs = append(coefs, coef)
+		Coef = append(Coef, coef)
 	}
-
-	return coefs, nil
+	return nil
+	//return Coefs, nil
 }
