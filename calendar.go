@@ -37,13 +37,11 @@ var LastDayYearEve = &cal.Holiday{
 }
 
 var BelgranoDay = &cal.Holiday{
-	Name:      "Aniversario paso a la inmortalidad del General Juan Manuel Belgrano",
-	Type:      cal.ObservancePublic,
-	StartYear: 2022,
-	EndYear:   2022,
-	Month:     time.June,
-	Day:       20,
-	Func:      cal.CalcDayOfMonth,
+	Name:  "Aniversario paso a la inmortalidad del General Juan Manuel Belgrano",
+	Type:  cal.ObservancePublic,
+	Month: time.June,
+	Day:   20,
+	Func:  cal.CalcDayOfMonth,
 }
 
 var IntentoAsesinatoCFK = &cal.Holiday{
@@ -53,6 +51,36 @@ var IntentoAsesinatoCFK = &cal.Holiday{
 	EndYear:   2022,
 	Month:     time.September,
 	Day:       2,
+	Func:      cal.CalcDayOfMonth,
+}
+
+var FeriadoTuristicoOctubre2022 = &cal.Holiday{
+	Name:      "Feriado turístico ad hoc",
+	Type:      cal.ObservancePublic,
+	StartYear: 2022,
+	EndYear:   2022,
+	Month:     time.October,
+	Day:       7,
+	Func:      cal.CalcDayOfMonth,
+}
+
+var FeriadoTuristicoNoviembre2022 = &cal.Holiday{
+	Name:      "Feriado turístico ad hoc",
+	Type:      cal.ObservancePublic,
+	StartYear: 2022,
+	EndYear:   2022,
+	Month:     time.November,
+	Day:       21,
+	Func:      cal.CalcDayOfMonth,
+}
+
+var FeriadoTuristicoDiciembre2022 = &cal.Holiday{
+	Name:      "Feriado turístico ad hoc",
+	Type:      cal.ObservancePublic,
+	StartYear: 2022,
+	EndYear:   2022,
+	Month:     time.December,
+	Day:       9,
 	Func:      cal.CalcDayOfMonth,
 }
 
