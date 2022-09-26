@@ -21,7 +21,6 @@ type Fecha time.Time
 const DateFormat = "2006-01-02"
 
 var Bonds []Bond
-var Coef []CER
 
 // define data structure to hold the json data
 type Flujo struct {
@@ -83,25 +82,14 @@ func main() {
 	// SetUpCalendar creates the calendar and set ups the holidays for Argentina.
 	SetUpCalendar()
 	go executeCronJob() // this will make the cron run in the background.
+
 	// load json with all the bond's data and handle any errors
-	data, err := ioutil.ReadFile("./bonds.json")
-	if err != nil {
-		fmt.Print(err)
-	}
-	// json data
-	// unmarshall the loaded JSON
-	err = json.Unmarshal([]byte(data), &Bonds)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
+	getBondsData()
+
 	// Load the CER data into Coef
 	getCER()
-	//Coef, err = getCER()
-	if err != nil {
-		fmt.Println("Error getting CER: ", err)
-		return
-	}
-	fmt.Println("Total Records in file: ", len(Coef))
+
+	fmt.Println("Total Records in file: ", len(Coef), "\n")
 
 	// start of the router and endpoints
 	router := gin.Default()
@@ -166,12 +154,12 @@ func aprWrapper(c *gin.Context) {
 
 		//fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
-		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
+		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), Coef)
+		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -351,12 +339,12 @@ func yieldWrapper(c *gin.Context) {
 
 		//fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
-		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
+		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), Coef)
+		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -432,12 +420,12 @@ func priceWrapper(c *gin.Context) {
 
 		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
-		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), Coef)
+		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), Coef)
+		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -627,4 +615,20 @@ func newton(guess float64, function func(float64) float64, derivative func(float
 	} else {
 		return newton(x, function, derivative, numIt+1)
 	}
+}
+
+func getBondsData() {
+	data, err := ioutil.ReadFile("./bonds.json")
+	if err != nil {
+		fmt.Print(err)
+	}
+	// json data
+	// unmarshall the loaded JSON
+	err = json.Unmarshal([]byte(data), &Bonds)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	fmt.Println("Llenado de data de bonos exitosa")
+	fmt.Println("Cantidad de bonos cargados: ", len(Bonds), "\n")
+
 }

@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var Coef []CER
+
 // struct to hold the index (CER) to adjust the face value of indexed bonds.
 type CER struct {
 	Date Fecha
@@ -16,19 +18,25 @@ type CER struct {
 	CER float64
 }
 
-func getCoefficient(date Fecha, coef []CER) (float64, error) {
+/* func getCoefficient(date Fecha, coef []CER) (float64, error) {
 	for i := len(coef) - 1; i >= 0; i-- {
 		if coef[i].Date == date {
 			return coef[i].CER, nil
 		}
 	}
 	return 0, fmt.Errorf("CER not found for date %v", date)
+} */
+
+func getCoefficient(date Fecha, coef *[]CER) (float64, error) {
+	for i := len(*coef) - 1; i >= 0; i-- {
+		if (*coef)[i].Date == date {
+			return (*coef)[i].CER, nil
+		}
+	}
+	return 0, fmt.Errorf("CER not found for date %v", date)
 }
 
-// need to convert the getCER function into one that works with pointers because the cron does does not execute over a variable.
-// It's just a funciton call
-// Need to define Coef as a global variable
-func getCER() error { // este era el primer parámetro []CER
+func getCER() error {
 	var saveFile bool
 	var downloadFile bool
 	var reader *csv.Reader
@@ -50,7 +58,7 @@ func getCER() error { // este era el primer parámetro []CER
 			res, error := os.Open(file)
 			if error != nil {
 				fmt.Println("Error opening CSV file: ", error)
-				return error // le saqué nil como primer parámtro
+				return error
 			}
 			defer res.Close()
 			reader = csv.NewReader(res)
@@ -77,12 +85,14 @@ func getCER() error { // este era el primer parámetro []CER
 
 		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
-			return err //le saqué nil como primer parámtro
+			fmt.Println("Error descargando CER.")
+			return err
 		}
 
 		res, getErr := dataset.Do(req)
 		if getErr != nil {
-			return getErr //le saqué nil como primer parámtro
+			fmt.Println("Error descargando CER.")
+			return getErr
 		}
 
 		if res.Body != nil {
@@ -105,7 +115,7 @@ func getCER() error { // este era el primer parámetro []CER
 		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			fmt.Println("Error creating file: ", err)
-			return err //le saqué nil como primer parámetro
+			return err
 		}
 		defer f.Close()
 		w := csv.NewWriter(f)
@@ -120,6 +130,7 @@ func getCER() error { // este era el primer parámetro []CER
 		coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
 		Coef = append(Coef, coef)
 	}
+	fmt.Println("Proceso de llenado de index CER exitoso.")
 	return nil
-	//return Coefs, nil
+
 }
