@@ -18,15 +18,6 @@ type CER struct {
 	CER float64
 }
 
-/* func getCoefficient(date Fecha, coef []CER) (float64, error) {
-	for i := len(coef) - 1; i >= 0; i-- {
-		if coef[i].Date == date {
-			return coef[i].CER, nil
-		}
-	}
-	return 0, fmt.Errorf("CER not found for date %v", date)
-} */
-
 func getCoefficient(date Fecha, coef *[]CER) (float64, error) {
 	for i := len(*coef) - 1; i >= 0; i-- {
 		if (*coef)[i].Date == date {
