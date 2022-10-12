@@ -89,7 +89,8 @@ func main() {
 	// Load the CER data into Coef
 	getCER()
 
-	fmt.Println("Total Records in file: ", len(Coef), "\n")
+	fmt.Println("Total Records in file: ", len(Coef))
+	fmt.Println()
 
 	// start of the router and endpoints
 	router := gin.Default()
@@ -150,7 +151,6 @@ func aprWrapper(c *gin.Context) {
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
 		offset := Bonds[index].Offset
-		//offset := -10
 
 		//fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
@@ -170,13 +170,34 @@ func aprWrapper(c *gin.Context) {
 	}
 
 	days := time.Time(cashFlow[0].Date).Sub(settlementDate).Hours() / 24
-	//fmt.Println("Días: ", days)
 	r := ((100*(1-endingFee))/((price*(1+initialFee))/ratio) - 1) * (365 / days)
 	mduration := (days / 365) / (1 + r)
 
-	c.JSON(http.StatusOK, gin.H{
+	/* 	c.JSON(http.StatusOK, gin.H{
 		"Yield":     r,
 		"MDuration": mduration,
+	}) */
+	// since zero coupon contains much less info that other bonds, i'm not using extendedInfo()
+
+	accDays := time.Time(settlementDate).Sub(time.Time(Bonds[index].IssueDate)).Hours()/24 - 1
+	coupon := Bonds[index].Coupon //I could have used 0 but this is more informative
+	residual := cashFlow[0].Residual + cashFlow[0].Amort
+	accInt := (accDays / 360 * coupon) * 100
+	techValue := accInt + residual
+	parity := price / techValue
+	//lastCoupon := Bonds[index].IssueDate
+	//lastAmort := Bonds[index].IssueDate
+
+	c.JSON(http.StatusOK, gin.H{
+		"Yield":            r,
+		"MDuration":        mduration,
+		"Accrual Days":     accDays,
+		"Current Coupon: ": coupon,
+		"Residual":         residual,
+		"Accrued Interest": accInt,
+		"Technical Value":  techValue,
+		"Parity":           parity,
+		"Last Coupon":      "N/A",
 	})
 
 }
@@ -289,7 +310,7 @@ func getCashFlow(ticker string) ([]Flujo, int, error) {
 			return bond.Cashflow, i, nil
 		}
 	}
-	return nil, -1, errors.New("Ticker Not Found")
+	return nil, -1, errors.New("ticker not found")
 }
 
 func yieldWrapper(c *gin.Context) {
@@ -357,7 +378,7 @@ func yieldWrapper(c *gin.Context) {
 
 	price = price / ratio
 
-	r, error := Yield(cashFlow, price, settlementDate, initialFee, endingFee)
+	r, error, cfIndex := Yield(cashFlow, price, settlementDate, initialFee, endingFee)
 	if error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation."})
 		return
@@ -369,9 +390,20 @@ func yieldWrapper(c *gin.Context) {
 		return
 	}
 
+	// Use index to calculate accDays, Parity
+
+	accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &price, cfIndex)
+
 	c.JSON(http.StatusOK, gin.H{
-		"Yield":     r,
-		"MDuration": mduration,
+		"Yield":            r,
+		"MDuration":        mduration,
+		"Accrual Days":     accDays,
+		"Current Coupon: ": coupon,
+		"Residual":         residual,
+		"Accrued Interest": accInt,
+		"Technical Value":  techValue,
+		"Parity":           parity,
+		"Last Coupon":      lastCoupon,
 	})
 
 	//c.IndentedJSON(http.StatusOK, r)
@@ -435,7 +467,7 @@ func priceWrapper(c *gin.Context) {
 		ratio = coef1 / coef2
 
 	}
-	p, error := Price(cashFlow, rate, settlementDate, initialFee, endingFee)
+	p, error, cfIndex := Price(cashFlow, rate, settlementDate, initialFee, endingFee)
 	if error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Price calculation"})
 		return
@@ -449,30 +481,53 @@ func priceWrapper(c *gin.Context) {
 
 	p = p * ratio
 
+	// Use index to calculate accDays, Parity
+
+	accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &p, cfIndex)
+
 	c.JSON(http.StatusOK, gin.H{
-		"Price":     p,
-		"MDuration": mduration,
+		"Price":            p,
+		"MDuration":        mduration,
+		"Accrual Days":     accDays,
+		"Current Coupon: ": coupon,
+		"Residual":         residual,
+		"Accrued Interest": accInt,
+		"Technical Value":  techValue,
+		"Parity":           parity,
+		"Last Coupon":      lastCoupon,
 	})
 
 	//c.IndentedJSON(http.StatusOK, p)
 }
 
-func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error) {
+func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int) (int, float64, float64, float64, float64, float64, Fecha, float64) {
+	accDays := time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours()/24 - 1
+	coupon := (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
+	residual := (*cashflow)[cfIndex].Residual
+	accInt := (accDays / 360 * coupon) * 100
+	techValue := accInt + residual
+	parity := *p / techValue
+	lastCoupon := (*cashflow)[cfIndex].Date
+	lastAmort := (*cashflow)[cfIndex].Amort
+	return int(accDays), coupon, residual, accInt, techValue, parity, lastCoupon, lastAmort
+}
+
+func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error, int) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
 
-	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, price)
+	values, dates, index := GenerateArrays(flow, settlementDate, initialFee, endingFee, price)
 
 	rate, error := ScheduledInternalRateOfReturn(values, dates, 0.001)
 	if error != nil {
-		return 0, error
+		return 0, error, 0
 	}
 
-	return rate, nil
+	return rate, nil, index
 }
 
 func Mduration(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64, price float64) (float64, error) {
-	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
+	values, dates, _ := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
 
 	if len(values) != len(dates) {
 		return 0, errors.New("values and dates must have the same length")
@@ -489,12 +544,15 @@ func Mduration(flow []Flujo, rate float64, settlementDate time.Time, initialFee 
 	return (-1 * (dur / (1 + rate))), nil
 }
 
-// Pass the casflow and get the slices separated to use with calculating funcions.
+// Pass the casflow and get the slices separated to use with calculating functions.
 // To get the cashflow to use with price, pass 0 as price
 // To get the casfhflow to use with yield, pass the price obtained from the endpoint
-func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, endingFee float64, price float64) ([]float64, []time.Time) {
+// It returns index of the immediate cashflow before the settlementDate in order to obtain the number of days, coupon to calculate parity.
+func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, endingFee float64, price float64) ([]float64, []time.Time, int) {
+	var index int
 	for i, cf := range flow {
 		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
+			index = i - 1
 			flow = flow[i:]
 			break
 		}
@@ -511,21 +569,21 @@ func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, 
 	}
 	values[len(flow)] = values[len(flow)] * (1 - endingFee)
 
-	return values, dates
+	return values, dates, index
 
 }
 
-func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error) {
+func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error, int) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
 	// Discard all cashflows before the settlementDate
-	values, dates := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
+	values, dates, index := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
 
 	price, error := ScheduledNetPresentValue(rate, values, dates)
 	if error != nil {
-		return 0, error
+		return 0, error, 0
 	}
 
-	return price * (1 + initialFee), nil
+	return price * (1 + initialFee), nil, index
 }
 
 // ScheduledNetPresentValue returns the Net Present Value of a scheduled cash flow series given a discount rate
@@ -629,6 +687,7 @@ func getBondsData() {
 		fmt.Println("error:", err)
 	}
 	fmt.Println("Llenado de data de bonos exitosa")
-	fmt.Println("Cantidad de bonos cargados: ", len(Bonds), "\n")
+	fmt.Println("Cantidad de bonos cargados: ", len(Bonds))
+	fmt.Println()
 
 }
