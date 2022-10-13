@@ -22,6 +22,16 @@ const DateFormat = "2006-01-02"
 
 var Bonds []Bond
 
+type extInfo struct {
+	accDays    int
+	currCoupon float64
+	residual   float64
+	accInt     float64
+	techValue  float64
+	parity     float64
+	lastCoupon Fecha
+}
+
 // define data structure to hold the json data
 type Flujo struct {
 	Date     Fecha
@@ -186,18 +196,17 @@ func aprWrapper(c *gin.Context) {
 	techValue := accInt + residual
 	parity := price / techValue
 	//lastCoupon := Bonds[index].IssueDate
-	//lastAmort := Bonds[index].IssueDate
 
 	c.JSON(http.StatusOK, gin.H{
-		"Yield":            r,
-		"MDuration":        mduration,
-		"Accrual Days":     accDays,
-		"Current Coupon: ": coupon,
-		"Residual":         residual,
-		"Accrued Interest": accInt,
-		"Technical Value":  techValue,
-		"Parity":           parity,
-		"Last Coupon":      "N/A",
+		"Yield":           r,
+		"MDuration":       mduration,
+		"AccrualDays":     accDays,
+		"CurrentCoupon: ": coupon,
+		"Residual":        residual,
+		"AccruedInterest": accInt,
+		"TechnicalValue":  techValue,
+		"Parity":          parity,
+		"LastCoupon":      "N/A",
 	})
 
 }
@@ -391,19 +400,20 @@ func yieldWrapper(c *gin.Context) {
 	}
 
 	// Use index to calculate accDays, Parity
+	origPrice := price * ratio // back to price to calculate parity correctly
 
-	accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &price, cfIndex)
+	accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
-		"Yield":            r,
-		"MDuration":        mduration,
-		"Accrual Days":     accDays,
-		"Current Coupon: ": coupon,
-		"Residual":         residual,
-		"Accrued Interest": accInt,
-		"Technical Value":  techValue,
-		"Parity":           parity,
-		"Last Coupon":      lastCoupon,
+		"Yield":           r,
+		"MDuration":       mduration,
+		"AccrualDays":     accDays,
+		"CurrentCoupon: ": coupon,
+		"Residual":        residual,
+		"AccruedInterest": accInt,
+		"TechnicalValue":  techValue,
+		"Parity":          parity,
+		"LastCoupon":      lastCoupon,
 	})
 
 	//c.IndentedJSON(http.StatusOK, r)
