@@ -22,6 +22,7 @@ const DateFormat = "2006-01-02"
 
 var Bonds []Bond
 
+// struct to use with extendedInfo func
 type extInfo struct {
 	accDays    int
 	currCoupon float64
@@ -188,6 +189,7 @@ func aprWrapper(c *gin.Context) {
 		"MDuration": mduration,
 	}) */
 	// since zero coupon contains much less info that other bonds, i'm not using extendedInfo()
+	// Need to use extendedInfo and ad an info byte to let know extendedInfo if it's zero coupon, indexed or plain bond.
 
 	accDays := time.Time(settlementDate).Sub(time.Time(Bonds[index].IssueDate)).Hours()/24 - 1
 	coupon := Bonds[index].Coupon //I could have used 0 but this is more informative
@@ -402,6 +404,8 @@ func yieldWrapper(c *gin.Context) {
 	// Use index to calculate accDays, Parity
 	origPrice := price * ratio // back to price to calculate parity correctly
 
+	// need to adapt to the new way of calling extendedInfo with a struct.
+
 	accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -510,6 +514,7 @@ func priceWrapper(c *gin.Context) {
 	//c.IndentedJSON(http.StatusOK, p)
 }
 
+// This should receive a
 func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int) (int, float64, float64, float64, float64, float64, Fecha, float64) {
 	accDays := time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours()/24 - 1
 	coupon := (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
