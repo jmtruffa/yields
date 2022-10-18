@@ -191,12 +191,12 @@ func aprWrapper(c *gin.Context) {
 	// since zero coupon contains much less info that other bonds, i'm not using extendedInfo()
 	// Need to use extendedInfo and ad an info byte to let know extendedInfo if it's zero coupon, indexed or plain bond.
 
-	accDays := time.Time(settlementDate).Sub(time.Time(Bonds[index].IssueDate)).Hours()/24 - 1
+	accDays := time.Time(settlementDate).Sub(time.Time(Bonds[index].IssueDate)).Hours() / 24
 	coupon := Bonds[index].Coupon //I could have used 0 but this is more informative
 	residual := cashFlow[0].Residual + cashFlow[0].Amort
 	accInt := (accDays / 360 * coupon) * 100
 	techValue := accInt + residual
-	parity := price / techValue
+	parity := price / techValue * 100
 	//lastCoupon := Bonds[index].IssueDate
 
 	c.JSON(http.StatusOK, gin.H{
@@ -516,14 +516,15 @@ func priceWrapper(c *gin.Context) {
 
 // This should receive a
 func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int) (int, float64, float64, float64, float64, float64, Fecha, float64) {
-	accDays := time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours()/24 - 1
+	accDays := time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24
 	coupon := (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
 	residual := (*cashflow)[cfIndex].Residual
 	accInt := (accDays / 360 * coupon) * 100
 	techValue := accInt + residual
-	parity := *p / techValue
+	parity := *p / techValue * 100
 	lastCoupon := (*cashflow)[cfIndex].Date
 	lastAmort := (*cashflow)[cfIndex].Amort
+	fmt.Println(accDays, coupon, residual, accInt, techValue, parity, lastCoupon, lastAmort)
 	return int(accDays), coupon, residual, accInt, techValue, parity, lastCoupon, lastAmort
 }
 
