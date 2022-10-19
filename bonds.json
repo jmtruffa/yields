@@ -4678,5 +4678,23 @@
         ],
         "Index": "",
         "Offset": 0
+    },
+    {
+        "ID": "51",
+        "Ticker": "X18S3",
+        "IssueDate": "2022-09-30",
+        "Maturity": "2023-09-18",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-09-18",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
     }
 ]
