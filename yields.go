@@ -31,6 +31,7 @@ type extInfo struct {
 	techValue  float64
 	parity     float64
 	lastCoupon Fecha
+	lastAmort  float64
 }
 
 // define data structure to hold the json data
@@ -191,13 +192,28 @@ func aprWrapper(c *gin.Context) {
 	// since zero coupon contains much less info that other bonds, i'm not using extendedInfo()
 	// Need to use extendedInfo and ad an info byte to let know extendedInfo if it's zero coupon, indexed or plain bond.
 
+	//info := extendedInfo(&settlementDate, &cashFlow, &origPrice, 0, ratio)
+	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
+
+	/* 	c.JSON(http.StatusOK, gin.H{
+		"Yield":           r,
+		"MDuration":       mduration,
+		"AccrualDays":     info.accDays,
+		"CurrentCoupon: ": info.currCoupon,
+		"Residual":        info.residual,
+		"AccruedInterest": info.accInt,
+		"TechnicalValue":  info.techValue,
+		"Parity":          info.parity,
+		"LastCoupon":      "N/A",
+		"LastAmort":       "N/A",
+	}) */
+
 	accDays := time.Time(settlementDate).Sub(time.Time(Bonds[index].IssueDate)).Hours() / 24
 	coupon := Bonds[index].Coupon //I could have used 0 but this is more informative
 	residual := cashFlow[0].Residual + cashFlow[0].Amort
 	accInt := (accDays / 360 * coupon) * 100
-	techValue := accInt + residual
+	techValue := ratio * residual
 	parity := price / techValue * 100
-	//lastCoupon := Bonds[index].IssueDate
 
 	c.JSON(http.StatusOK, gin.H{
 		"Yield":           r,
@@ -406,18 +422,20 @@ func yieldWrapper(c *gin.Context) {
 
 	// need to adapt to the new way of calling extendedInfo with a struct.
 
-	accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
+	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio)
+	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Yield":           r,
 		"MDuration":       mduration,
-		"AccrualDays":     accDays,
-		"CurrentCoupon: ": coupon,
-		"Residual":        residual,
-		"AccruedInterest": accInt,
-		"TechnicalValue":  techValue,
-		"Parity":          parity,
-		"LastCoupon":      lastCoupon,
+		"AccrualDays":     info.accDays,
+		"CurrentCoupon: ": info.currCoupon,
+		"Residual":        info.residual,
+		"AccruedInterest": info.accInt,
+		"TechnicalValue":  info.techValue,
+		"Parity":          info.parity,
+		"LastCoupon":      info.lastCoupon,
+		"LastAmort":       info.lastAmort,
 	})
 
 	//c.IndentedJSON(http.StatusOK, r)
@@ -497,25 +515,43 @@ func priceWrapper(c *gin.Context) {
 
 	// Use index to calculate accDays, Parity
 
-	accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &p, cfIndex)
+	origPrice := p / ratio
+	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio)
+	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &p, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
-		"Price":            p,
-		"MDuration":        mduration,
-		"Accrual Days":     accDays,
-		"Current Coupon: ": coupon,
-		"Residual":         residual,
-		"Accrued Interest": accInt,
-		"Technical Value":  techValue,
-		"Parity":           parity,
-		"Last Coupon":      lastCoupon,
+		"Price":           p,
+		"MDuration":       mduration,
+		"AccrualDays":     info.accDays,
+		"CurrentCoupon: ": info.currCoupon,
+		"Residual":        info.residual,
+		"AccruedInterest": info.accInt,
+		"TechnicalValue":  info.techValue,
+		"Parity":          info.parity,
+		"LastCoupon":      info.lastCoupon,
+		"LastAmort":       info.lastAmort,
 	})
 
 	//c.IndentedJSON(http.StatusOK, p)
 }
 
 // This should receive a
-func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int) (int, float64, float64, float64, float64, float64, Fecha, float64) {
+func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int, ratio float64) extInfo {
+	var info extInfo
+	info.accDays = int(time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24)
+	//teng que dejar cfIndex = 0 siempre y cuando el bono sea zerocoupon
+	info.currCoupon = (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
+	info.residual = (*cashflow)[cfIndex].Residual
+	info.accInt = (float64(info.accDays) / 360 * info.currCoupon) * 100
+	info.techValue = float64(info.accInt) + info.residual*ratio
+	info.parity = *p / info.techValue * 100
+	info.lastCoupon = (*cashflow)[cfIndex].Date
+	info.lastAmort = (*cashflow)[cfIndex].Amort
+	return info
+
+}
+
+/* func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int) (int, float64, float64, float64, float64, float64, Fecha, float64) {
 	accDays := time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24
 	coupon := (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
 	residual := (*cashflow)[cfIndex].Residual
@@ -526,7 +562,7 @@ func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIn
 	lastAmort := (*cashflow)[cfIndex].Amort
 	fmt.Println(accDays, coupon, residual, accInt, techValue, parity, lastCoupon, lastAmort)
 	return int(accDays), coupon, residual, accInt, techValue, parity, lastCoupon, lastAmort
-}
+} */
 
 func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error, int) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
