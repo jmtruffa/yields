@@ -4696,5 +4696,283 @@
         ],
         "Index": "CER",
         "Offset": -10
+    },
+    {
+        "ID": "52",
+        "Ticker": "CAC2D",
+        "IssueDate": "2017-05-15",
+        "Maturity": "2024-05-15",
+        "Coupon": 0.0688,
+        "Cashflow": [
+            {
+                "Date": "2017-11-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2018-05-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2018-11-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2019-05-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2019-11-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2020-05-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2020-11-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2021-05-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2021-11-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2022-05-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2022-11-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2023-05-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2023-11-15",
+                "Rate": 0.0688,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.44
+            },
+            {
+                "Date": "2024-05-15",
+                "Rate": 0.0688,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 103.44
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "53",
+        "Ticker": "CP17D",
+        "IssueDate": "2020-09-08",
+        "Maturity": "2025-03-08",
+        "Coupon": 0.0950,
+        "Cashflow": [
+            {
+                "Date": "2021-03-08",
+                "Rate": 0.095,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.75
+            },
+            {
+                "Date": "2021-09-08",
+                "Rate": 0.095,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.75
+            },
+            {
+                "Date": "2022-03-08",
+                "Rate": 0.095,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.75
+            },
+            {
+                "Date": "2022-09-08",
+                "Rate": 0.095,
+                "Amort": 13.30,
+                "Residual": 86.70,
+                "Amount": 18.05
+            },
+            {
+                "Date": "2023-03-08",
+                "Rate": 0.095,
+                "Amort": 13.30,
+                "Residual": 73.4,
+                "Amount": 17.42
+            },
+            {
+                "Date": "2023-09-08",
+                "Rate": 0.095,
+                "Amort": 13.30,
+                "Residual": 60.1,
+                "Amount": 16.79
+            },
+            {
+                "Date": "2024-03-08",
+                "Rate": 0.095,
+                "Amort": 13.30,
+                "Residual": 46.8,
+                "Amount": 16.15
+            },
+            {
+                "Date": "2024-09-08",
+                "Rate": 0.095,
+                "Amort": 13.30,
+                "Residual": 33.50,
+                "Amount": 15.52
+            },
+            {
+                "Date": "2025-03-08",
+                "Rate": 0.095,
+                "Amort": 33.50,
+                "Residual": 0,
+                "Amount": 35.09
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "54",
+        "Ticker": "IRCFD",
+        "IssueDate": "2022-07-08",
+        "Maturity": "2028-06-22",
+        "Coupon": 0.0875,
+        "Cashflow": [
+            {
+                "Date": "2022-12-22",
+                "Rate": 0.0875,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 3.99
+            },
+            {
+                "Date": "2023-06-22",
+                "Rate": 0.0875,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.38
+            },
+            {
+                "Date": "2023-12-22",
+                "Rate": 0.0875,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.38
+            },
+            {
+                "Date": "2024-06-22",
+                "Rate": 0.0875,
+                "Amort": 17.50,
+                "Residual": 82.5,
+                "Amount": 21.88
+            },
+            {
+                "Date": "2024-12-22",
+                "Rate": 0.0875,
+                "Amort": 0,
+                "Residual": 82.5,
+                "Amount": 3.61
+            },
+            {
+                "Date": "2025-06-22",
+                "Rate": 0.0875,
+                "Amort": 17.50,
+                "Residual": 65,
+                "Amount": 21.11
+            },
+            {
+                "Date": "2025-12-22",
+                "Rate": 0.0875,
+                "Amort": 0,
+                "Residual": 65,
+                "Amount": 2.84
+            },
+            {
+                "Date": "2026-06-22",
+                "Rate": 0.0875,
+                "Amort": 17.50,
+                "Residual": 47.5,
+                "Amount": 20.34
+            },
+            {
+                "Date": "2026-12-22",
+                "Rate": 0.0875,
+                "Amort": 0,
+                "Residual": 47.5,
+                "Amount": 2.08
+            },
+            {
+                "Date": "2027-06-22",
+                "Rate": 0.0875,
+                "Amort": 17.50,
+                "Residual": 30,
+                "Amount": 19.58
+            },
+            {
+                "Date": "2027-12-22",
+                "Rate": 0.0875,
+                "Amort": 0,
+                "Residual": 30,
+                "Amount": 1.31
+            },
+            {
+                "Date": "2028-06-22",
+                "Rate": 0.0875,
+                "Amort": 30,
+                "Residual": 0,
+                "Amount": 31.31
+            }
+        ],
+        "Index": "",
+        "Offset": 0
     }
 ]
