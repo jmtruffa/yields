@@ -486,7 +486,30 @@ func Mduration(flow []Flujo, rate float64, settlementDate time.Time, initialFee 
 		xnpv = values[i-1] / math.Pow(1+rate, exp)
 		dur += xnpv * exp / -price
 	}
-	return (-1 * (dur / (1 + rate))), nil
+
+	// calculate the number of payments per year as the maximum number of payments in a year that appears in the dates vector
+	datesPerYear := DatesPerYear(dates)
+
+	return (-1 * (dur / (1 + rate/float64(datesPerYear)))), nil
+
+}
+
+func DatesPerYear(dateVector []time.Time) int {
+	counts := make(map[int]int)
+
+	for _, date := range dateVector {
+		year := date.Year()
+		counts[year]++
+	}
+
+	maxCount := 0
+	for _, count := range counts {
+		if count > maxCount {
+			maxCount = count
+		}
+	}
+
+	return maxCount
 }
 
 // Pass the casflow and get the slices separated to use with calculating funcions.
