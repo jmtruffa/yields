@@ -542,7 +542,7 @@ func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIn
 	//teng que dejar cfIndex = 0 siempre y cuando el bono sea zerocoupon
 	info.currCoupon = (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
 	info.residual = (*cashflow)[cfIndex].Residual
-	info.accInt = (float64(info.accDays) / 360 * info.currCoupon) * 100
+	info.accInt = (float64(info.accDays) / 360 * info.currCoupon) * info.residual * ratio
 	info.techValue = float64(info.accInt) + info.residual*ratio
 	info.parity = *p / info.techValue * 100
 	info.lastCoupon = (*cashflow)[cfIndex].Date
@@ -570,7 +570,7 @@ func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee flo
 
 	values, dates, index := GenerateArrays(flow, settlementDate, initialFee, endingFee, price)
 
-	rate, error := ScheduledInternalRateOfReturn(values, dates, 0.001)
+	rate, error := ScheduledInternalRateOfReturn(values, dates, 0.0001)
 	if error != nil {
 		return 0, error, 0
 	}
@@ -593,7 +593,29 @@ func Mduration(flow []Flujo, rate float64, settlementDate time.Time, initialFee 
 		xnpv = values[i-1] / math.Pow(1+rate, exp)
 		dur += xnpv * exp / -price
 	}
-	return (-1 * (dur / (1 + rate))), nil
+
+	// calculate the number of payments per year as the maximum number of payments in a year that appears in the dates vector
+	datesPerYear := DatesPerYear(dates)
+
+	return (-1 * (dur / (1 + rate/float64(datesPerYear)))), nil
+}
+
+func DatesPerYear(dateVector []time.Time) int {
+	counts := make(map[int]int)
+
+	for _, date := range dateVector {
+		year := date.Year()
+		counts[year]++
+	}
+
+	maxCount := 0
+	for _, count := range counts {
+		if count > maxCount {
+			maxCount = count
+		}
+	}
+
+	return maxCount
 }
 
 // Pass the casflow and get the slices separated to use with calculating functions.
