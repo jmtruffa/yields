@@ -118,7 +118,7 @@ func getCER() error {
 		var coef CER
 		date, _ := time.Parse(DateFormat, rows[i][0])
 		coef.Date = Fecha(date)
-		coef.CER, _ = strconv.ParseFloat(rows[i][2], 64)
+		coef.CER, _ = strconv.ParseFloat(rows[i][1], 64)
 		Coef = append(Coef, coef)
 	}
 	fmt.Println("Proceso de llenado de index CER exitoso.")

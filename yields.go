@@ -538,15 +538,27 @@ func priceWrapper(c *gin.Context) {
 // This should receive a
 func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int, ratio float64) extInfo {
 	var info extInfo
-	info.accDays = int(time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24)
+
 	//teng que dejar cfIndex = 0 siempre y cuando el bono sea zerocoupon
-	info.currCoupon = (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
-	info.residual = (*cashflow)[cfIndex].Residual
+
+	if cfIndex == 0 {
+		info.accDays = 0
+		info.currCoupon = (*cashflow)[cfIndex+0].Rate //because is the coupon on the next cashflow that will be paid.
+		info.residual = 100
+		info.lastCoupon = Fecha(*settlementDate)
+		info.lastAmort = 0
+	} else {
+		info.accDays = int(time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24)
+		info.currCoupon = (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
+		info.residual = (*cashflow)[cfIndex].Residual
+		info.lastCoupon = (*cashflow)[cfIndex].Date
+		info.lastAmort = (*cashflow)[cfIndex].Amort
+	}
+
 	info.accInt = (float64(info.accDays) / 360 * info.currCoupon) * info.residual * ratio
 	info.techValue = float64(info.accInt) + info.residual*ratio
 	info.parity = *p / info.techValue * 100
-	info.lastCoupon = (*cashflow)[cfIndex].Date
-	info.lastAmort = (*cashflow)[cfIndex].Amort
+
 	return info
 
 }
@@ -626,7 +638,7 @@ func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, 
 	var index int
 	for i, cf := range flow {
 		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
-			index = i - 1
+			index = int(math.Max(float64(i-1), 0))
 			flow = flow[i:]
 			break
 		}
