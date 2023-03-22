@@ -615,7 +615,7 @@ func Mduration(flow []Flujo, rate float64, settlementDate time.Time, initialFee 
 func DatesPerYear(dateVector []time.Time) int {
 	counts := make(map[int]int)
 
-	for _, date := range dateVector {
+	for _, date := range dateVector[1:] {
 		year := date.Year()
 		counts[year]++
 	}
