@@ -11,6 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"bytes"
+	"encoding/csv"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jasonlvhit/gocron"
@@ -323,10 +326,35 @@ func scheduleWrapper(c *gin.Context) {
 		return
 	}
 	scheduleOut := getScheduleOfPayments(&cashFlow, &t)
-	c.JSON(http.StatusOK, gin.H{
-		"schedule": scheduleOut,
-	})
 
+	csvString := convertToCSV(scheduleOut)
+	c.Writer.Header().Set("Content-Type", "text/csv")
+	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s.csv", ticker))
+	c.Writer.WriteString(string(csvString))
+
+	//c.JSON(http.StatusOK, gin.H{
+	//	"schedule": scheduleOut,
+	//})
+	c.Writer.Write(csvString)
+}
+
+func convertToCSV(schedule []Flujo) []byte {
+	var buffer bytes.Buffer
+	writer := csv.NewWriter(&buffer)
+	defer writer.Flush()
+
+	for _, cash := range schedule {
+		record := []string{
+			cash.Date.String(),
+			strconv.FormatFloat(cash.Rate, 'f', -1, 64),
+			strconv.FormatFloat(cash.Amort, 'f', -1, 64),
+			strconv.FormatFloat(cash.Residual, 'f', -1, 64),
+			strconv.FormatFloat(cash.Amount, 'f', -1, 64),
+		}
+		writer.Write(record)
+	}
+
+	return buffer.Bytes()
 }
 
 func getScheduleOfPayments(cashFlow *[]Flujo, settlementDate *time.Time) []Flujo {
