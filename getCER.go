@@ -114,6 +114,7 @@ func getCER() error {
 		w.Flush()
 	}
 
+	// Populate the Coef global variable with the data grabbed from disk.
 	for i := 1; i < len(rows); i++ {
 		var coef CER
 		date, _ := time.Parse(DateFormat, rows[i][0])

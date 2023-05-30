@@ -135,7 +135,8 @@ func main() {
 }
 
 func aprWrapper(c *gin.Context) {
-	//Params: ticker, settlementDate, price, InitialFee, endingFee
+	//Params: ticker, settlementDate, price, InitialFee, endingFee, extendIndex
+	// extendIndex: rate at which extend Index (CER). In yearly basis.
 	ticker := strings.ToUpper(c.Query("ticker"))
 
 	settle, _ := c.GetQuery("settlementDate")
@@ -163,11 +164,13 @@ func aprWrapper(c *gin.Context) {
 		return
 	}
 
+	//extendIndex, _ := c.GetQuery("extendIndex")
+
 	// Get the cashflow only if the ticker is a valid zero coupon bond
 
 	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
+		c.JSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
 		return
 	} else if Bonds[index].Coupon != 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
@@ -328,13 +331,13 @@ func scheduleWrapper(c *gin.Context) {
 	scheduleOut := getScheduleOfPayments(&cashFlow, &t)
 
 	csvString := convertToCSV(scheduleOut)
-	c.Writer.Header().Set("Content-Type", "text/csv")
-	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s.csv", ticker))
+	c.Writer.Header().Set("Content-Type", "text/json")
+	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s.json", ticker))
 	c.Writer.WriteString(string(csvString))
 
-	//c.JSON(http.StatusOK, gin.H{
-	//	"schedule": scheduleOut,
-	//})
+	c.JSON(http.StatusOK, gin.H{
+		"schedule": scheduleOut,
+	})
 	c.Writer.Write(csvString)
 }
 
@@ -415,7 +418,7 @@ func yieldWrapper(c *gin.Context) {
 
 	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
+		c.JSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
 		return
 	}
 
@@ -450,13 +453,13 @@ func yieldWrapper(c *gin.Context) {
 
 	r, error, cfIndex := Yield(cashFlow, price, settlementDate, initialFee, endingFee)
 	if error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation."})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Yield calculation."})
 		return
 	}
 
 	mduration, error := Mduration(cashFlow, r, settlementDate, initialFee, endingFee, price)
 	if error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
 		return
 	}
 
@@ -481,7 +484,7 @@ func yieldWrapper(c *gin.Context) {
 		"LastAmort":       info.lastAmort,
 	})
 
-	//c.IndentedJSON(http.StatusOK, r)
+	//c.JSON(http.StatusOK, r)
 }
 
 func priceWrapper(c *gin.Context) {
@@ -515,7 +518,7 @@ func priceWrapper(c *gin.Context) {
 
 	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
 		return
 	}
 	// debería poner la obtención de los coefs
@@ -544,13 +547,13 @@ func priceWrapper(c *gin.Context) {
 	}
 	p, error, cfIndex := Price(cashFlow, rate, settlementDate, initialFee, endingFee)
 	if error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Price calculation"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Price calculation"})
 		return
 	}
 
 	mduration, error := Mduration(cashFlow, rate, settlementDate, initialFee, endingFee, p)
 	if error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "sth went wrong with the Mduration calculation"})
 		return
 	}
 
@@ -575,7 +578,6 @@ func priceWrapper(c *gin.Context) {
 		"LastAmort":       info.lastAmort,
 	})
 
-	//c.IndentedJSON(http.StatusOK, p)
 }
 
 // This should receive a
@@ -605,19 +607,6 @@ func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIn
 	return info
 
 }
-
-/* func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int) (int, float64, float64, float64, float64, float64, Fecha, float64) {
-	accDays := time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24
-	coupon := (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
-	residual := (*cashflow)[cfIndex].Residual
-	accInt := (accDays / 360 * coupon) * 100
-	techValue := accInt + residual
-	parity := *p / techValue * 100
-	lastCoupon := (*cashflow)[cfIndex].Date
-	lastAmort := (*cashflow)[cfIndex].Amort
-	fmt.Println(accDays, coupon, residual, accInt, techValue, parity, lastCoupon, lastAmort)
-	return int(accDays), coupon, residual, accInt, techValue, parity, lastCoupon, lastAmort
-} */
 
 func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error, int) {
 	// settlementDate acts as cut-off date for the yield calculation. On every function call, all previous cashflows are discarded.
@@ -820,3 +809,5 @@ func getBondsData() {
 	fmt.Println()
 
 }
+
+//func extendIndex()
