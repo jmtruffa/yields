@@ -76,6 +76,10 @@ func (d *Fecha) UnmarshalJSON(p []byte) error {
 	return nil
 }
 
+func (d Fecha) Sub(t Fecha) time.Duration {
+	return time.Time(d).Sub(time.Time(t))
+}
+
 func (d Fecha) String() string {
 	x, _ := d.MarshalJSON()
 	return string(x)
@@ -164,7 +168,12 @@ func aprWrapper(c *gin.Context) {
 		return
 	}
 
-	//extendIndex, _ := c.GetQuery("extendIndex")
+	extIndex, _ := c.GetQuery("extendIndex")
+	extendIndex, error := strconv.ParseFloat(extIndex, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. Value maybe missing.	": error.Error()})
+		return
+	}
 
 	// Get the cashflow only if the ticker is a valid zero coupon bond
 
@@ -181,22 +190,32 @@ func aprWrapper(c *gin.Context) {
 	// There's an offset variable to adjust the lookback period for the index.
 
 	ratio := 1.0
+	var coef1 float64
+	var coef2 float64
+
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
 		offset := Bonds[index].Offset
 
 		//fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
+		type error interface {
+			Error() string
+		}
+		var err error
 
-		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), &Coef)
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), &Coef)
+		//coef1 = c1
+
+		coef2, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
+		//coef2 = c2
 
 		ratio = coef1 / coef2
 
@@ -246,6 +265,7 @@ func aprWrapper(c *gin.Context) {
 		"TechnicalValue":  techValue,
 		"Parity":          parity,
 		"LastCoupon":      "N/A",
+		"Coef used":       coef1,
 	})
 
 }
@@ -416,6 +436,13 @@ func yieldWrapper(c *gin.Context) {
 		return
 	}
 
+	extIndex, _ := c.GetQuery("extendIndex")
+	extendIndex, error := strconv.ParseFloat(extIndex, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. ": error.Error()})
+		return
+	}
+
 	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
@@ -426,23 +453,30 @@ func yieldWrapper(c *gin.Context) {
 	// There's an offset variable to adjust the lookback period for the index.
 
 	ratio := 1.0
+	var coef1 float64
+	var coef2 float64
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
 		offset := Bonds[index].Offset
-		//offset := -10
 
-		//fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
+		type error interface {
+			Error() string
+		}
+		var err error
 
-		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), &Coef)
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), &Coef)
+		//coef1 = c1
+
+		coef2, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
+		//coef2 = c2
 		//fmt.Println("coef1: ", coef1, "coef2: ", coef2)
 
 		ratio = coef1 / coef2
@@ -482,6 +516,7 @@ func yieldWrapper(c *gin.Context) {
 		"Parity":          info.parity,
 		"LastCoupon":      info.lastCoupon,
 		"LastAmort":       info.lastAmort,
+		"Coef Used":       coef1,
 	})
 
 	//c.JSON(http.StatusOK, r)
@@ -516,6 +551,13 @@ func priceWrapper(c *gin.Context) {
 		return
 	}
 
+	extIndex, _ := c.GetQuery("extendIndex")
+	extendIndex, error := strconv.ParseFloat(extIndex, 64)
+	if error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. Value maybe missing.	": error.Error()})
+		return
+	}
+
 	cashFlow, index, error := getCashFlow(ticker)
 	if error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "ticker not found"})
@@ -523,23 +565,33 @@ func priceWrapper(c *gin.Context) {
 	}
 	// debería poner la obtención de los coefs
 	ratio := 1.0
+	var coef1 float64
+	var coef2 float64
+
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
 		offset := Bonds[index].Offset
-		//offset := -10
+
+		type error interface {
+			Error() string
+		}
+		var err error
 
 		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
-		coef1, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), &Coef)
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		coef2, err := getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), &Coef)
+		//coef1 = c1
+
+		coef2, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
+		//coef2 = c2
 		//fmt.Println("coef1: ", coef1, "coef2: ", coef2)
 
 		ratio = coef1 / coef2
@@ -576,6 +628,7 @@ func priceWrapper(c *gin.Context) {
 		"Parity":          info.parity,
 		"LastCoupon":      info.lastCoupon,
 		"LastAmort":       info.lastAmort,
+		"Coef used":       coef1,
 	})
 
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -18,13 +19,22 @@ type CER struct {
 	CER float64
 }
 
-func getCoefficient(date Fecha, coef *[]CER) (float64, error) {
+func getCoefficient(date Fecha, extendIndex float64, coef *[]CER) (float64, error) {
+	//func getCoefficient(date Fecha, coef *[]CER) (float64, error) {
 	for i := len(*coef) - 1; i >= 0; i-- {
 		if (*coef)[i].Date == date {
 			return (*coef)[i].CER, nil
 		}
 	}
-	return 0, fmt.Errorf("CER not found for date %v", date)
+	// The Index was not found. Return the last index value found
+	// Date is already checked for correct format on the calling function
+
+	// Calculate the difference in days between date variable and the last date in the index.
+	diffDays := date.Sub((*coef)[len(*coef)-1].Date).Hours() / 24
+	newCoef := (*coef)[len(*coef)-1].CER * (math.Pow(1+extendIndex, diffDays/365))
+
+	return newCoef, nil
+	//fmt.Errorf("CER not found for date %v and it was impossible to calculate it from the extended Index", date)
 }
 
 func getCER() error {
