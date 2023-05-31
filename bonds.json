@@ -10090,5 +10090,23 @@
         ],
         "Index": "CER",
         "Offset": -10
+    },
+    {
+        "ID": "83",
+        "Ticker": "X18O3",
+        "IssueDate": "2023-05-189",
+        "Maturity": "2023-10-18",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2023-10-18",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
     }
 ]

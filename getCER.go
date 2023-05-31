@@ -18,12 +18,20 @@ type CER struct {
 	CER float64
 }
 
+//func getCoefficient(date Fecha, extendIndex float64, coef *[]CER) (float64, error) {
 func getCoefficient(date Fecha, coef *[]CER) (float64, error) {
 	for i := len(*coef) - 1; i >= 0; i-- {
 		if (*coef)[i].Date == date {
 			return (*coef)[i].CER, nil
 		}
 	}
+	// The Index was not found. Return the last index value found
+	// Date is already checked for correct format on the calling function
+
+	// Calculate the difference in days between date variable and the last date in the index.
+	//diffDays := date.Sub(*coef)[len(*coef)].Date
+	//t := (*coef)[len(*coef)].CER * ((1 + extendIndex) ^ (diffDays / 365))
+
 	return 0, fmt.Errorf("CER not found for date %v", date)
 }
 
