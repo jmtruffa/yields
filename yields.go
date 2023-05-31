@@ -63,10 +63,6 @@ func (d Fecha) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + time.Time(d).Format(DateFormat) + `"`), nil
 }
 
-func (d Fecha) Sub(t Fecha) time.Duration {
-	return time.Time(d).Sub(time.Time(t))
-}
-
 func (d *Fecha) UnmarshalJSON(p []byte) error {
 	var s string
 	if err := json.Unmarshal(p, &s); err != nil {
