@@ -169,9 +169,20 @@ func aprWrapper(c *gin.Context) {
 	}
 
 	extIndex, _ := c.GetQuery("extendIndex")
+	if extIndex == "" { // if extendIndex is empty, set it to 0
+		extIndex = "0"
+	}
+
 	extendIndex, error := strconv.ParseFloat(extIndex, 64)
 	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. Value maybe missing.	": error.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. Value maybe misisng or not numeric	": error.Error()})
+		return
+	}
+
+	// should check number should be >= 0
+	if extendIndex < 0 {
+		// s// var err error
+		c.JSON(http.StatusBadRequest, gin.H{"Extended Index should be greater or equal to 0": "Error"})
 		return
 	}
 
@@ -208,14 +219,12 @@ func aprWrapper(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		//coef1 = c1
 
 		coef2, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		//coef2 = c2
 
 		ratio = coef1 / coef2
 
@@ -351,8 +360,8 @@ func scheduleWrapper(c *gin.Context) {
 	scheduleOut := getScheduleOfPayments(&cashFlow, &t)
 
 	csvString := convertToCSV(scheduleOut)
-	c.Writer.Header().Set("Content-Type", "text/json")
-	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s.json", ticker))
+	c.Writer.Header().Set("Content-Type", "text/csv")
+	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s.csv", ticker))
 	c.Writer.WriteString(string(csvString))
 
 	c.JSON(http.StatusOK, gin.H{
@@ -437,9 +446,19 @@ func yieldWrapper(c *gin.Context) {
 	}
 
 	extIndex, _ := c.GetQuery("extendIndex")
+	if extIndex == "" { // if extendIndex is empty, set it to 0
+		extIndex = "0"
+	}
+
 	extendIndex, error := strconv.ParseFloat(extIndex, 64)
 	if error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. ": error.Error()})
+		return
+	}
+	// should check number should be >= 0
+	if extendIndex < 0 {
+		// s// var err error
+		c.JSON(http.StatusBadRequest, gin.H{"Extended Index should be greater or equal to 0": "Error"})
 		return
 	}
 
@@ -469,15 +488,12 @@ func yieldWrapper(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		//coef1 = c1
 
 		coef2, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		//coef2 = c2
-		//fmt.Println("coef1: ", coef1, "coef2: ", coef2)
 
 		ratio = coef1 / coef2
 
@@ -550,11 +566,20 @@ func priceWrapper(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"Error in Ending Fee. ": error.Error()})
 		return
 	}
-
 	extIndex, _ := c.GetQuery("extendIndex")
+	if extIndex == "" { // if extendIndex is empty, set it to 0
+		extIndex = "0"
+	}
+
 	extendIndex, error := strconv.ParseFloat(extIndex, 64)
 	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. Value maybe missing.	": error.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. Value maybe misisng or not numeric": error.Error()})
+		return
+	}
+	// should check number should be >= 0
+	if extendIndex < 0 {
+		// s// var err error
+		c.JSON(http.StatusBadRequest, gin.H{"Extended Index should be greater or equal to 0": "Error"})
 		return
 	}
 
@@ -584,15 +609,12 @@ func priceWrapper(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		//coef1 = c1
 
 		coef2, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
 		}
-		//coef2 = c2
-		//fmt.Println("coef1: ", coef1, "coef2: ", coef2)
 
 		ratio = coef1 / coef2
 
