@@ -73,7 +73,7 @@
                 "Date": "2025-07-09",
                 "Rate": 0.0075,
                 "Amort": 8,
-                "Residual": 8,
+                "Residual": 80,
                 "Amount": 8.33
             },
             {
@@ -108,7 +108,7 @@
                 "Date": "2028-01-09",
                 "Rate": 0.0175,
                 "Amort": 8,
-                "Residual": 4,
+                "Residual": 40,
                 "Amount": 8.42
             },
             {
@@ -172,7 +172,7 @@
                 "Amount": 0
             },
             {
-                "Date": "2022-01-09",
+                "Date": "2022-01-09",   
                 "Rate": 0.005,
                 "Amort": 0,
                 "Residual": 100,
@@ -224,7 +224,7 @@
                 "Date": "2025-07-09",
                 "Rate": 0.0075,
                 "Amort": 8,
-                "Residual": 8,
+                "Residual": 80,
                 "Amount": 8.33
             },
             {
@@ -259,7 +259,7 @@
                 "Date": "2028-01-09",
                 "Rate": 0.0175,
                 "Amort": 8,
-                "Residual": 4,
+                "Residual": 40,
                 "Amount": 8.42
             },
             {
