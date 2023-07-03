@@ -214,7 +214,8 @@ func aprWrapper(c *gin.Context) {
 		}
 		var err error
 
-		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
+		//coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(Bonds[index].Maturity)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -483,7 +484,7 @@ func yieldWrapper(c *gin.Context) {
 		}
 		var err error
 
-		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(Bonds[index].Maturity)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -604,7 +605,7 @@ func priceWrapper(c *gin.Context) {
 
 		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
 
-		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(Bonds[index].Maturity)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -744,7 +745,8 @@ func DatesPerYear(dateVector []time.Time) int {
 func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, endingFee float64, price float64) ([]float64, []time.Time, int) {
 	var index int
 	for i, cf := range flow {
-		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) {
+		fmt.Println(settlementDate.Add(-24 * time.Hour))
+		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) { // returns true if cf.Date is after date to settlementDate - 1
 			index = int(math.Max(float64(i-1), 0))
 			flow = flow[i:]
 			break
