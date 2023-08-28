@@ -31,7 +31,7 @@ func getCoefficient(date Fecha, extendIndex float64, coef *[]CER) (float64, erro
 
 	// Calculate the difference in days between date variable and the last date in the index.
 	diffDays := date.Sub((*coef)[len(*coef)-1].Date).Hours() / 24
-	newCoef := (*coef)[len(*coef)-1].CER * (math.Pow(1+extendIndex, diffDays/365))
+	newCoef := (*coef)[len(*coef)-1].CER * (math.Pow(1+extendIndex/365, diffDays/365))
 
 	return newCoef, nil
 	//fmt.Errorf("CER not found for date %v and it was impossible to calculate it from the extended Index", date)

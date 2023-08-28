@@ -203,6 +203,7 @@ func aprWrapper(c *gin.Context) {
 	ratio := 1.0
 	var coef1 float64
 	var coef2 float64
+	var coefFecha Fecha
 
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
@@ -215,7 +216,8 @@ func aprWrapper(c *gin.Context) {
 		var err error
 
 		//coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
-		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(Bonds[index].Maturity)), offset)), extendIndex, &Coef)
+		coefFecha = Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset))
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -266,16 +268,18 @@ func aprWrapper(c *gin.Context) {
 	parity := price / techValue * 100
 
 	c.JSON(http.StatusOK, gin.H{
-		"Yield":           r,
-		"MDuration":       mduration,
-		"AccrualDays":     accDays,
-		"CurrentCoupon: ": coupon,
-		"Residual":        residual,
-		"AccruedInterest": accInt,
-		"TechnicalValue":  techValue,
-		"Parity":          parity,
-		"LastCoupon":      "N/A",
-		"Coef used":       coef1,
+		"Yield":                 r,
+		"MDuration":             mduration,
+		"AccrualDays":           accDays,
+		"CurrentCoupon: ":       coupon,
+		"Residual":              residual,
+		"AccruedInterest":       accInt,
+		"TechnicalValue":        techValue,
+		"Parity":                parity,
+		"LastCoupon":            "N/A",
+		"Coef Used":             coef1,
+		"Coef Issue":            coef2,
+		"Coef Fecha de Cálculo": coefFecha,
 	})
 
 }
@@ -475,6 +479,7 @@ func yieldWrapper(c *gin.Context) {
 	ratio := 1.0
 	var coef1 float64
 	var coef2 float64
+	var coefFecha Fecha
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
 		offset := Bonds[index].Offset
@@ -483,8 +488,8 @@ func yieldWrapper(c *gin.Context) {
 			Error() string
 		}
 		var err error
-
-		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(Bonds[index].Maturity)), offset)), extendIndex, &Coef)
+		coefFecha = Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset))
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -523,17 +528,19 @@ func yieldWrapper(c *gin.Context) {
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
-		"Yield":           r,
-		"MDuration":       mduration,
-		"AccrualDays":     info.accDays,
-		"CurrentCoupon: ": info.currCoupon,
-		"Residual":        info.residual,
-		"AccruedInterest": info.accInt,
-		"TechnicalValue":  info.techValue,
-		"Parity":          info.parity,
-		"LastCoupon":      info.lastCoupon,
-		"LastAmort":       info.lastAmort,
-		"Coef Used":       coef1,
+		"Yield":                 r,
+		"MDuration":             mduration,
+		"AccrualDays":           info.accDays,
+		"CurrentCoupon: ":       info.currCoupon,
+		"Residual":              info.residual,
+		"AccruedInterest":       info.accInt,
+		"TechnicalValue":        info.techValue,
+		"Parity":                info.parity,
+		"LastCoupon":            info.lastCoupon,
+		"LastAmort":             info.lastAmort,
+		"Coef Used":             coef1,
+		"Coef Issue":            coef2,
+		"Coef Fecha de Cálculo": coefFecha,
 	})
 
 	//c.JSON(http.StatusOK, r)
@@ -593,7 +600,7 @@ func priceWrapper(c *gin.Context) {
 	ratio := 1.0
 	var coef1 float64
 	var coef2 float64
-
+	var coefFecha Fecha
 	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
 
 		offset := Bonds[index].Offset
@@ -603,9 +610,8 @@ func priceWrapper(c *gin.Context) {
 		}
 		var err error
 
-		fmt.Println("Fechas a buscar: ", Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), "\n", Fecha(calendar.WorkdaysFrom(time.Time(Bonds[index].IssueDate), offset)))
-
-		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(Bonds[index].Maturity)), offset)), extendIndex, &Coef)
+		coefFecha = Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset))
+		coef1, err = getCoefficient(Fecha(calendar.WorkdaysFrom(time.Time(Fecha(settlementDate)), offset)), extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
@@ -641,17 +647,19 @@ func priceWrapper(c *gin.Context) {
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &p, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
-		"Price":           p,
-		"MDuration":       mduration,
-		"AccrualDays":     info.accDays,
-		"CurrentCoupon: ": info.currCoupon,
-		"Residual":        info.residual,
-		"AccruedInterest": info.accInt,
-		"TechnicalValue":  info.techValue,
-		"Parity":          info.parity,
-		"LastCoupon":      info.lastCoupon,
-		"LastAmort":       info.lastAmort,
-		"Coef used":       coef1,
+		"Price":                 p,
+		"MDuration":             mduration,
+		"AccrualDays":           info.accDays,
+		"CurrentCoupon: ":       info.currCoupon,
+		"Residual":              info.residual,
+		"AccruedInterest":       info.accInt,
+		"TechnicalValue":        info.techValue,
+		"Parity":                info.parity,
+		"LastCoupon":            info.lastCoupon,
+		"LastAmort":             info.lastAmort,
+		"Coef Used":             coef1,
+		"Coef Issue":            coef2,
+		"Coef Fecha de Cálculo": coefFecha,
 	})
 
 }
