@@ -1,25 +1,25 @@
 package main
 
 import (
-	"encoding/csv"
+	"database/sql"
 	"fmt"
 	"math"
-	"net/http"
-	"os"
-	"strconv"
+	"os/exec"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var Coef []CER
 
 // struct to hold the index (CER) to adjust the face value of indexed bonds.
 type CER struct {
-	Date Fecha
+	Date time.Time
 	//Country string
 	CER float64
 }
 
-func getCoefficient(date Fecha, extendIndex float64, coef *[]CER) (float64, error) {
+func getCoefficient(date time.Time, extendIndex float64, coef *[]CER) (float64, error) {
 	//func getCoefficient(date Fecha, coef *[]CER) (float64, error) {
 	for i := len(*coef) - 1; i >= 0; i-- {
 		if (*coef)[i].Date == date {
@@ -38,101 +38,67 @@ func getCoefficient(date Fecha, extendIndex float64, coef *[]CER) (float64, erro
 }
 
 func getCER() error {
-	var saveFile bool
-	var downloadFile bool
-	var reader *csv.Reader
-	file := "/Users/juan/Google Drive/Mi unidad/analisis financieros/functions/data/CER.csv"
-	fileInfo, _ := os.Stat(file)
 
-	if fileInfo == nil {
-		fmt.Println("No previous file found. Downloading...")
-		downloadFile = true
-		saveFile = true
-	} else {
-		modTime := fileInfo.ModTime()
-		// calculate the time difference
-		diff := time.Since(modTime)
+	// run the python script to get the CER data
+	cmd := exec.Command("python3", "/Users/juan/Library/CloudStorage/GoogleDrive-jmtruffa@gmail.com/Mi unidad/dev/python/downloader/CERDownloader.py")
 
-		if diff < 120*time.Hour { // 5 days -> 24 * 5
-			// grab the file from disk
-			fmt.Println("The file is newer than 5 days old. Grabbing from disk...")
-			res, error := os.Open(file)
-			if error != nil {
-				fmt.Println("Error opening CSV file: ", error)
-				return error
-			}
-			defer res.Close()
-			reader = csv.NewReader(res)
-			saveFile = false
-			downloadFile = false
+	fmt.Println("Running CERDownloader.py...")
+	fmt.Println()
 
-		} else {
-			// download the file again
-			fmt.Println("The file is older than 5 days. Downloading...")
-			downloadFile = true
-			saveFile = true
-		}
-	}
-	if downloadFile {
-		// download the file again
-
-		//apiKey := os.Getenv("ALPHACAST_API_KEY")
-		apiKey := "ak_PrhTBPgElKK60m8iWqqI"
-
-		url := "https://api.alphacast.io/datasets/8277/data?apiKey=" + apiKey + "&%24select=3290015&$format=csv"
-		dataset := http.Client{
-			Timeout: time.Second * 10,
-		}
-
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-		if err != nil {
-			fmt.Println("Error descargando CER.")
-			return err
-		}
-
-		res, getErr := dataset.Do(req)
-		if getErr != nil {
-			fmt.Println("Error descargando CER.")
-			return getErr
-		}
-
-		if res.Body != nil {
-			defer res.Body.Close()
-		}
-		reader = csv.NewReader(res.Body)
-		saveFile = true
-
-	}
-
-	reader.LazyQuotes = true
-	rows, err := reader.ReadAll()
+	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Falla en el ReadAll. ", err)
+		fmt.Println("Error running CERDownloader.py:", err)
+		return err
 	}
 
-	//var coefs []CER
+	fmt.Println("CERDownloader.py ran successfully")
+	fmt.Println()
 
-	if saveFile {
-		f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-		if err != nil {
-			fmt.Println("Error creating file: ", err)
+	db, err := sql.Open("sqlite3", "/Users/juan/data/economicData.sqlite3")
+	if err != nil {
+		fmt.Println("Error opening database:", err)
+		return err
+	}
+	defer db.Close()
+
+	// Query the "CER" table
+	rows, err := db.Query("SELECT date, CER FROM CER")
+	if err != nil {
+		fmt.Println("Error querying CER table:", err)
+		return err
+	}
+	defer rows.Close()
+
+	// Iterate through the query results and populate the Coef global variable
+	for rows.Next() {
+		var dateTimestamp int64
+		var cerValue float64
+
+		// Scan the values from the row
+		if err := rows.Scan(&dateTimestamp, &cerValue); err != nil {
+			fmt.Println("Error scanning row:", err)
 			return err
 		}
-		defer f.Close()
-		w := csv.NewWriter(f)
-		w.WriteAll(rows)
-		w.Flush()
-	}
 
-	// Populate the Coef global variable with the data grabbed from disk.
-	for i := 1; i < len(rows); i++ {
+		// Convert the timestamp to time.Time
+		dateTime := time.Unix(dateTimestamp, 0).UTC()
+
+		// Create a CER struct and populate its fields
 		var coef CER
-		date, _ := time.Parse(DateFormat, rows[i][0])
-		coef.Date = Fecha(date)
-		coef.CER, _ = strconv.ParseFloat(rows[i][1], 64)
+		coef.Date = time.Time(dateTime)
+
+		coef.CER = cerValue
+
+		// Append to the Coef slice
 		Coef = append(Coef, coef)
 	}
-	fmt.Println("Proceso de llenado de index CER exitoso.")
-	return nil
 
+	fmt.Println("Total Records in file: ", len(Coef))
+	fmt.Println()
+	fmt.Println("Last Record in file: ")
+	fmt.Println("Fecha: ", Coef[len(Coef)-1].Date.Format(DateFormat))
+	fmt.Println("CER: ", Coef[len(Coef)-1].CER)
+	fmt.Println()
+
+	return nil
 }
