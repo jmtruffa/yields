@@ -32,6 +32,7 @@ Value: (float64) Yield: Returns ytm of the bond given its price and cashflow. Wo
       (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
       (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
       (string): CoefFechaCalculo: date of the coefficient used for settlement date.
+      (string): Maturity: of the bond.
 
 
 Params:
@@ -57,6 +58,7 @@ Params:
         (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
         (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
         (string): CoefFechaCalculo: date of the coefficient used for settlement date.
+        (string): Maturity: of the bond.
  
  Params:
   ticker: (string) ticker of the pre-loaded bond.
@@ -108,6 +110,7 @@ This API implements these functions from /alpeb/go-finance/:
         (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
         (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
         (string): CoefFechaCalculo: date of the coefficient used for settlement date.
+        (string): Maturity: of the bond.
 
 Params:
   ticker: (string) ticker of the pre-loaded bond.

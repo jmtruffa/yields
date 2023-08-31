@@ -251,6 +251,7 @@ func aprWrapper(c *gin.Context) {
 		"Coef Used":             coef1,
 		"Coef Issue":            coef2,
 		"Coef Fecha de Cálculo": Fecha(coefFecha),
+		"Maturity":              Bonds[index].Maturity,
 	})
 
 }
@@ -513,6 +514,7 @@ func yieldWrapper(c *gin.Context) {
 		"Coef Used":             coef1,
 		"Coef Issue":            coef2,
 		"Coef Fecha de Cálculo": Fecha(coefFecha),
+		"Maturity":              Bonds[index].Maturity,
 	})
 
 }
@@ -632,6 +634,7 @@ func priceWrapper(c *gin.Context) {
 		"Coef Used":             coef1,
 		"Coef Issue":            coef2,
 		"Coef Fecha de Cálculo": Fecha(coefFecha),
+		"Maturity":              Bonds[index].Maturity,
 	})
 
 }
