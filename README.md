@@ -2,6 +2,12 @@ This API returns the yield or price of a given pre-loaded bond in bonds.json
 The endpoint checks if the requested bond is zerocoupon.
  If bonds is index adjusted, it will look for the coefficientes of IssueDate, settlementDate and calculate a ratio. Works only with CER (http://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables_datos.asp?serie=3540&detalle=CER%A0(Base%202.2.2002=1))
 
+
+ The coefficients are stored in a sqlite3 database stored locally.
+ There's a call in the getCER() that uses a python script to download and populate a sqlite database with the last series. It is called every time the API starts or after 24 hours from a cron job.
+ Python should be installed on the system.
+ The 
+
 The script implements Gin-gonic to set up an API and the following endpoints:
 
 1.- yield
@@ -13,8 +19,20 @@ The script implements Gin-gonic to set up an API and the following endpoints:
 
 1.- yield 
 
-Value: (float64) Return yield of the bond given its price and cashflow. Works with indexed and non-indexed bonds.
-      (float64) Return modified duration of the bond.
+Value: (float64) Yield: Returns ytm of the bond given its price and cashflow. Works with indexed and non-indexed bonds.
+      (float64) MDuration: Returns modified duration of the bond.
+      (int) AccrualDays: Accrual days since last interest payment.
+      (float64) CurrentCoupon: actual coupon based on date.
+      (float64) Residual: Outstanding principal amount.
+      (float64) AccruedInterest: Accrued interest since last coupon.
+      (float64) TechnicalValue: technical value.
+      (float64) Parity: parity of the bond.
+      (string) LastCoupon: date of last coupon.
+      (string) LasAmort: date of last amortization (payment of principal)
+      (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
+      (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
+      (string): CoefFechaCalculo: date of the coefficient used for settlement date.
+
 
 Params:
   ticker: (string) ticker of the pre-loaded bond.
@@ -22,11 +40,23 @@ Params:
   price: (float64) required price of the referred bond
   initialFee: (float64) fee to charge on the beginning of the cashflow. Usually broker fee. Could be zero.
   endingFee: (float64) fee to charge on the end of the cashflow. Usually broker fee. Could be zero.
+  extendIndex: (float64) rate (in anual terms) to use to extend coefficient in case it ends before settlement date.
   
  2.- price
  
- Value: (float64) Price of the bond given its return and cashflow.
-        (float64) Return modified duration of the bond.
+ Value: (float64) Price: price of the bond given its return and cashflow.
+        (float64) MDuration: Returns modified duration of the bond.
+        (int) AccrualDays: Accrual days since last interest payment.
+        (float64) CurrentCoupon: actual coupon based on date.
+        (float64) Residual: Outstanding principal amount.
+        (float64) AccruedInterest: Accrued interest since last coupon.
+        (float64) TechnicalValue: technical value.
+        (float64) Parity: parity of the bond.
+        (string) LastCoupon: date of last coupon.
+        (string) LasAmort: date of last amortization (payment of principal)
+        (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
+        (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
+        (string): CoefFechaCalculo: date of the coefficient used for settlement date.
  
  Params:
   ticker: (string) ticker of the pre-loaded bond.
@@ -34,6 +64,7 @@ Params:
   rate: (float64) required rate for the given bond
   initialFee: (float64) fee to charge on the beginning of the cashflow. Usually broker fee. Could be zero.
   endingFee: (float64) fee to charge on the end of the cashflow. Usually broker fee. Could be zero.
+  extendIndex: (float64) rate (in anual terms) to use to extend coefficient in case it ends before settlement date.
   
  3.- schedule
  
@@ -62,11 +93,21 @@ This API implements these functions from /alpeb/go-finance/:
 
  6.- apr
 
- Idem 1 but returns in APR instead of effective yield. Works only with zero coupon bonds. The endpoint checks if the requested bond is zerocoupon.
+ Idem 1 but returns the APR instead of ytm. Works only with zero coupon bonds. The endpoint checks if the requested bond is zerocoupon.
  If bonds is index adjusted, it will look for the coefficientes of IssueDate, settlementDate and calculate a ratio. Works only with CER (http://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables_datos.asp?serie=3540&detalle=CER%A0(Base%202.2.2002=1))
 
- Value: (float64) Return APR of the bond given its price and cashflow. 
-      (float64) Return modified duration of the bond.
+ Value: (float64) Returns APR of the bond given its price and cashflow. 
+        (float64) Returns modified duration of the bond.
+        (int) AccrualDays: Accrual days since last interest payment.
+        (float64) CurrentCoupon: actual coupon based on date.
+        (float64) Residual: Outstanding principal amount.
+        (float64) AccruedInterest: Accrued interest since last coupon.
+        (float64) TechnicalValue: technical value.
+        (float64) Parity: parity of the bond.
+        (string) LastCoupon: N/A for this type of bonds.
+        (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
+        (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
+        (string): CoefFechaCalculo: date of the coefficient used for settlement date.
 
 Params:
   ticker: (string) ticker of the pre-loaded bond.
@@ -74,5 +115,6 @@ Params:
   price: (float64) required price of the referred bond
   initialFee: (float64) fee to charge on the beginning of the cashflow. Usually broker fee. Could be zero.
   endingFee: (float64) fee to charge on the end of the cashflow. Usually broker fee. Could be zero.
+  extendIndex: (float64) rate (in anual terms) to use to extend coefficient in case it ends before settlement date.
   
  
