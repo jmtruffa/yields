@@ -40,7 +40,7 @@ func getCoefficient(date time.Time, extendIndex float64, coef *[]CER) (float64, 
 func getCER() error {
 
 	// run the python script to get the CER data
-	cmd := exec.Command("python3", "/Users/juan/Library/CloudStorage/GoogleDrive-jmtruffa@gmail.com/Mi unidad/dev/python/downloader/CERDownloader.py")
+	cmd := exec.Command("python3", "CERDownloader.py")
 
 	fmt.Println("Running CERDownloader.py...")
 	fmt.Println()

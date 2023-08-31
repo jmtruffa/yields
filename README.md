@@ -5,8 +5,8 @@ The endpoint checks if the requested bond is zerocoupon.
 
  The coefficients are stored in a sqlite3 database stored locally.
  There's a call in the getCER() that uses a python script to download and populate a sqlite database with the last series. It is called every time the API starts or after 24 hours from a cron job.
- Python should be installed on the system.
- The 
+ Python should be installed on the system. 
+ The two source files needed are included in the repo for you compiling convenience.
 
 The script implements Gin-gonic to set up an API and the following endpoints:
 
