@@ -761,6 +761,9 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee floa
 }
 
 func getBondsData() {
+	fmt.Println("Leyendo data de bonos...")
+	fmt.Println()
+
 	data, err := ioutil.ReadFile("./bonds.json")
 	if err != nil {
 		fmt.Print(err)
