@@ -110,7 +110,10 @@ func main() {
 	getCER()
 
 	// start of the router and endpoints
-	router := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	fmt.Println("Server is running on port 8080")
+	//router := gin.Default() En caso de querer ver los logs de las requests
 	// CORS for https://foo.com and https://github.com origins, allowing:
 	// - PUT and PATCH methods
 	// - Origin header
@@ -727,7 +730,7 @@ func DatesPerYear(dateVector []time.Time) int {
 func GenerateArrays(flow []Flujo, settlementDate time.Time, initialFee float64, endingFee float64, price float64) ([]float64, []time.Time, int) {
 	var index int
 	for i, cf := range flow {
-		fmt.Println(settlementDate.Add(-24 * time.Hour))
+		//fmt.Println(settlementDate.Add(-24 * time.Hour))
 		if cf.Date.After(settlementDate.Add(-24 * time.Hour)) { // returns true if cf.Date is after date to settlementDate - 1
 			index = int(math.Max(float64(i-1), 0))
 			flow = flow[i:]

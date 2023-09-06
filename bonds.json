@@ -13356,5 +13356,41 @@
         ],
         "Index": "CER",
         "Offset": -10
+    },
+    {
+        "ID": "116",
+        "Ticker": "TDA24",
+        "IssueDate": "2023-04-28",
+        "Maturity": "2024-04-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2024-04-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "117",
+        "Ticker": "TDG24",
+        "IssueDate": "2023-06-13",
+        "Maturity": "2024-08-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2024-08-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
     }
 ]
