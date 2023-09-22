@@ -70,6 +70,11 @@ func getCER() error {
 	defer rows.Close()
 
 	// Iterate through the query results and populate the Coef global variable
+	// if Coef is created, empty it. this will empty Coef if the function is called from the cron job
+	if len(Coef) > 0 {
+		Coef = nil
+	}
+
 	for rows.Next() {
 		var dateTimestamp int64
 		var cerValue float64
