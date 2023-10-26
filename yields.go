@@ -110,10 +110,13 @@ func main() {
 	getCER()
 
 	// start of the router and endpoints
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
+	// start the router in debug mode
+	gin.SetMode(gin.DebugMode)
+
+	//gin.SetMode(gin.ReleaseMode)
+	//router := gin.New()
 	fmt.Println("Server is running on port 8080")
-	//router := gin.Default() En caso de querer ver los logs de las requests
+	router := gin.Default() //En caso de querer ver los logs de las requests
 	// CORS for https://foo.com and https://github.com origins, allowing:
 	// - PUT and PATCH methods
 	// - Origin header
@@ -234,6 +237,7 @@ func aprWrapper(c *gin.Context) {
 	days := time.Time(cashFlow[0].Date).Sub(settlementDate).Hours() / 24
 	r := ((100*(1-endingFee))/((price*(1+initialFee))/ratio) - 1) * (365 / days)
 	mduration := (days / 365) / (1 + r)
+	// va desde issueDate porque es zero coupon
 	accDays := time.Time(settlementDate).Sub(time.Time(Bonds[index].IssueDate)).Hours() / 24
 	coupon := Bonds[index].Coupon //I could have used 0 but this is more informative
 	residual := cashFlow[0].Residual + cashFlow[0].Amort
@@ -654,9 +658,9 @@ func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIn
 		info.lastCoupon = Fecha(*settlementDate)
 		info.lastAmort = 0
 	} else {
-		info.accDays = int(time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24)
-		info.currCoupon = (*cashflow)[cfIndex+1].Rate //because is the coupon on the next cashflow that will be paid.
-		info.residual = (*cashflow)[cfIndex].Residual
+		info.accDays = int(time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24) // accDays from last coupon
+		info.currCoupon = (*cashflow)[cfIndex+1].Rate                                                         //because is the coupon on the next cashflow that will be paid.
+		info.residual = (*cashflow)[cfIndex-1].Residual
 		info.lastCoupon = (*cashflow)[cfIndex].Date
 		info.lastAmort = (*cashflow)[cfIndex].Amort
 	}

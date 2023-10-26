@@ -9903,10 +9903,10 @@
         "Cashflow": [
             {
                 "Date": "2024-02-28",
-                "Rate": 0,
+                "Rate": 0.03,
                 "Amort": 100,
                 "Residual": 0,
-                "Amount": 100
+                "Amount": 104.258
             }
         ],
         "Index": "CER",
@@ -9914,14 +9914,14 @@
     },
     {
         "ID": "76",
-        "Ticker": "TDF24D",
+        "Ticker": "TDF24",
         "IssueDate": "2022-09-30",
         "Maturity": "2024-02-28",
         "Coupon": 0,
         "Cashflow": [
             {
                 "Date": "2024-02-28",
-                "Rate": 0,
+                "Rate": 0.0,
                 "Amort": 100,
                 "Residual": 0,
                 "Amount": 100
@@ -10011,10 +10011,10 @@
         "Cashflow": [
             {
                 "Date": "2023-09-29",
-                "Rate": 0,
+                "Rate": 0.0225,
                 "Amort": 100,
                 "Residual": 0,
-                "Amount": 100
+                "Amount": 102.53
             }
         ],
         "Index": "CER",
@@ -10022,17 +10022,17 @@
     },
     {
         "ID": "82",
-        "Ticker": "TDS23D",
+        "Ticker": "TDS23",
         "IssueDate": "2022-08-12",
         "Maturity": "2023-09-29",
         "Coupon": 0,
         "Cashflow": [
             {
                 "Date": "2023-09-29",
-                "Rate": 0,
+                "Rate": 0.0225,
                 "Amort": 100,
                 "Residual": 0,
-                "Amount": 100
+                "Amount": 102.53
             }
         ],
         "Index": "",
@@ -13244,7 +13244,7 @@
         "Ticker": "T2V4",
         "IssueDate": "2023-05-19",
         "Maturity": "2024-09-30",
-        "Coupon": 0.00,
+        "Coupon": 0.005,
         "Cashflow": [
             {
                 "Date": "2023-09-30",
@@ -13366,7 +13366,7 @@
         "Cashflow": [
             {
                 "Date": "2024-04-30",
-                "Rate": 0,
+                "Rate": 0.0,
                 "Amort": 100,
                 "Residual": 0,
                 "Amount": 100
@@ -13374,6 +13374,24 @@
         ],
         "Index": "",
         "Offset": 0
+    },
+    {
+        "ID": "116",
+        "Ticker": "TDA24C",
+        "IssueDate": "2023-04-28",
+        "Maturity": "2024-04-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2024-04-30",
+                "Rate": 0.03,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 103.268
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
     },
     {
         "ID": "117",
@@ -13384,7 +13402,7 @@
         "Cashflow": [
             {
                 "Date": "2024-08-30",
-                "Rate": 0,
+                "Rate": 0.0,
                 "Amort": 100,
                 "Residual": 0,
                 "Amount": 100
@@ -13392,5 +13410,137 @@
         ],
         "Index": "",
         "Offset": 0
+    },
+    {
+        "ID": "118",
+        "Ticker": "TDG24C",
+        "IssueDate": "2023-06-13",
+        "Maturity": "2024-08-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2024-08-30",
+                "Rate": 0.0325,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 103.9541
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "119",
+        "Ticker": "TDJ24C",
+        "IssueDate": "2023-09-18",
+        "Maturity": "2024-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2024-06-30",
+                "Rate": 0.0325,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 102.5819
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "120",
+        "Ticker": "TDJ24",
+        "IssueDate": "2023-09-18",
+        "Maturity": "2024-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2024-06-30",
+                "Rate": 0.0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "121",
+        "Ticker": "TX25",
+        "IssueDate": "2022-05-23",
+        "Maturity": "2025-11-09",
+        "Coupon": 0.018,
+        "Cashflow": [
+            {
+                "Date": "2022-11-09",
+                "Rate": 0.018,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.944
+            },
+            {
+                "Date": "2023-05-09",
+                "Rate": 0.018,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2023-11-09",
+                "Rate": 0.018,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2024-05-09",
+                "Rate": 0.018,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2024-11-09",
+                "Rate": 0.018,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2025-05-09",
+                "Rate": 0.018,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1
+            },
+            {
+                "Date": "2025-11-09",
+                "Rate": 0.018,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 101
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "122",
+        "Ticker": "X20F4",
+        "IssueDate": "2023-09-29",
+        "Maturity": "2024-02-20",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2024-01-18",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
     }
 ]
