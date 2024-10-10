@@ -13384,7 +13384,7 @@
         "Cashflow": [
             {
                 "Date": "2024-04-30",
-                "Rate": 0.03,
+                "Rate": 0.0325,
                 "Amort": 100,
                 "Residual": 0,
                 "Amount": 103.268
@@ -13542,5 +13542,1055 @@
         ],
         "Index": "CER",
         "Offset": -10
+    },
+    {
+        "ID": "123",
+        "Ticker": "BPA7D",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "124",
+        "Ticker": "BPB7D",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "125",
+        "Ticker": "BPC7D",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "126",
+        "Ticker": "BPD7D",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "127",
+        "Ticker": "BPA7C",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "128",
+        "Ticker": "BPB7C",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "129",
+        "Ticker": "BPC7C",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "130",
+        "Ticker": "BPD7C",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "131",
+        "Ticker": "BPY6D",
+        "IssueDate": "2024-03-07",
+        "Maturity": "2026-05-31",
+        "Coupon": 0.03,
+        "Cashflow": [
+            {
+                "Date": "2024-08-31",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.45
+            },
+            {
+                "Date": "2024-11-30",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-02-28",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-05-31",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-08-31",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-11-30",
+                "Rate": 0.03,
+                "Amort": 33,
+                "Residual": 67,
+                "Amount": 33.75
+            },
+            {
+                "Date": "2026-02-28",
+                "Rate": 0.03,
+                "Amort": 33,
+                "Residual": 34,
+                "Amount": 33.50
+            },
+            {
+                "Date": "2026-05-31",
+                "Rate": 0.03,
+                "Amort": 34,
+                "Residual": 0,
+                "Amount": 34.26
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "132",
+        "Ticker": "BPY6C",
+        "IssueDate": "2024-03-07",
+        "Maturity": "2026-05-31",
+        "Coupon": 0.03,
+        "Cashflow": [
+            {
+                "Date": "2024-08-31",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 1.45
+            },
+            {
+                "Date": "2024-11-30",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-02-28",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-05-31",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-08-31",
+                "Rate": 0.03,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 0.75
+            },
+            {
+                "Date": "2025-11-30",
+                "Rate": 0.03,
+                "Amort": 33,
+                "Residual": 67,
+                "Amount": 33.75
+            },
+            {
+                "Date": "2026-02-28",
+                "Rate": 0.03,
+                "Amort": 33,
+                "Residual": 34,
+                "Amount": 33.50
+            },
+            {
+                "Date": "2026-05-31",
+                "Rate": 0.03,
+                "Amort": 34,
+                "Residual": 0,
+                "Amount": 34.26
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "133",
+        "Ticker": "BPJ5D",
+        "IssueDate": "2024-02-16",
+        "Maturity": "2025-06-30",
+        "Coupon": 0.0,
+        "Cashflow": [
+            {
+                "Date": "2024-07-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 91.67,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-08-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 83.34,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-09-30",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 75.01,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 66.68,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-11-30",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 58.35,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-12-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 50.02,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-01-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 41.69,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-02-28",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 33.36,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-03-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 25.03,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 16.7,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-05-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 8.37,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-06-30",
+                "Rate": 0.0,
+                "Amort": 8.37,
+                "Residual": 0,
+                "Amount": 8.37
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "134",
+        "Ticker": "BPJ5C",
+        "IssueDate": "2024-02-16",
+        "Maturity": "2025-06-30",
+        "Coupon": 0.0,
+        "Cashflow": [
+            {
+                "Date": "2024-07-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 91.67,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-08-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 83.34,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-09-30",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 75.01,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 66.68,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-11-30",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 58.35,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2024-12-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 50.02,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-01-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 41.69,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-02-28",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 33.36,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-03-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 25.03,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 16.7,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-05-31",
+                "Rate": 0.0,
+                "Amort": 8.33,
+                "Residual": 8.37,
+                "Amount": 8.33
+            },
+            {
+                "Date": "2025-06-30",
+                "Rate": 0.0,
+                "Amort": 8.37,
+                "Residual": 0,
+                "Amount": 8.37
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "135",
+        "Ticker": "TZX25",
+        "IssueDate": "2024-02-28",
+        "Maturity": "2025-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2025-06-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "136",
+        "Ticker": "TZX26",
+        "IssueDate": "2024-02-01",
+        "Maturity": "2026-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2026-06-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "137",
+        "Ticker": "TZX27",
+        "IssueDate": "2024-02-01",
+        "Maturity": "2027-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2027-06-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "138",
+        "Ticker": "TZX28",
+        "IssueDate": "2024-02-01",
+        "Maturity": "2028-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2028-06-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "139",
+        "Ticker": "TZXD5",
+        "IssueDate": "2024-03-15",
+        "Maturity": "2025-12-15",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2025-12-15",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "140",
+        "Ticker": "TZXD6",
+        "IssueDate": "2024-03-15",
+        "Maturity": "2026-12-15",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2026-12-15",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "141",
+        "Ticker": "TZXD7",
+        "IssueDate": "2024-03-15",
+        "Maturity": "2027-12-15",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2027-12-15",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "142",
+        "Ticker": "BPO7D",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "143",
+        "Ticker": "BPO7C",
+        "IssueDate": "2024-01-05",
+        "Maturity": "2027-10-31",
+        "Coupon": 0.05,
+        "Cashflow": [
+            {
+                "Date": "2024-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 4.1
+            },
+            {
+                "Date": "2025-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2025-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-04-30",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2026-10-31",
+                "Rate": 0.05,
+                "Amort": 0,
+                "Residual": 100,
+                "Amount": 2.5
+            },
+            {
+                "Date": "2027-04-30",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 50,
+                "Amount": 52.5
+            },
+            {
+                "Date": "2027-10-31",
+                "Rate": 0.05,
+                "Amort": 50,
+                "Residual": 0,
+                "Amount": 51.25
+            }
+        ],
+        "Index": "",
+        "Offset": 0
     }
 ]

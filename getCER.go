@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
-	"os/exec"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -40,19 +39,20 @@ func getCoefficient(date time.Time, extendIndex float64, coef *[]CER) (float64, 
 func getCER() error {
 
 	// run the python script to get the CER data
-	cmd := exec.Command("python3", "CERDownloader.py")
+	// CER is updated automatically every day at 5:00 PM by a cron job in desktoplinux
+	//cmd := exec.Command("python3", "CERDownloader.py")
 
-	fmt.Println("Running CERDownloader.py...")
-	fmt.Println()
+	//fmt.Println("Running CERDownloader.py...")
+	//fmt.Println()
 
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("Error running CERDownloader.py:", err)
-		return err
-	}
+	// err := cmd.Run()
+	// if err != nil {
+	// 	fmt.Println("Error running CERDownloader.py:", err)
+	// 	return err
+	// }
 
-	fmt.Println("CERDownloader.py ran successfully")
-	fmt.Println()
+	//fmt.Println("CERDownloader.py ran successfully")
+	//fmt.Println()
 
 	db, err := sql.Open("sqlite3", "/Users/juan/data/economicData.sqlite3")
 	if err != nil {
@@ -62,7 +62,7 @@ func getCER() error {
 	defer db.Close()
 
 	// Query the "CER" table
-	rows, err := db.Query("SELECT date, CER FROM CER")
+	rows, err := db.Query("SELECT date, CER FROM CER2")
 	if err != nil {
 		fmt.Println("Error querying CER table:", err)
 		return err

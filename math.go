@@ -8,9 +8,9 @@ import (
 
 const (
 	// MaxIterations determines the maximum number of iterations performed by the Newton-Raphson algorithm.
-	MaxIterations = 30
+	MaxIterations = 60
 	// Precision determines how close to the solution the Newton-Raphson algorithm should arrive before stopping.
-	Precision = 1e-6
+	Precision = 1e-4
 )
 
 func newton(guess float64, function func(float64) float64, derivative func(float64) float64, numIt int) (float64, error) {

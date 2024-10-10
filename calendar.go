@@ -84,6 +84,26 @@ var FeriadoTuristicoDiciembre2022 = &cal.Holiday{
 	Func:      cal.CalcDayOfMonth,
 }
 
+var FeriadoPuenteDiversidadCultural = &cal.Holiday{
+	Name:      "Feriado puente por Diversidad Cultural",
+	Type:      cal.ObservancePublic,
+	StartYear: 2023,
+	EndYear:   2023,
+	Month:     time.October,
+	Day:       13,
+	Func:      cal.CalcDayOfMonth,
+}
+
+var FeriadoDiversidadCultural = &cal.Holiday{
+	Name:      "Feriado Diversidad Cultural",
+	Type:      cal.ObservancePublic,
+	StartYear: 2023,
+	EndYear:   2023,
+	Month:     time.October,
+	Day:       16,
+	Func:      cal.CalcDayOfMonth,
+}
+
 var calendar = cal.NewBusinessCalendar()
 
 func SetUpCalendar() {
@@ -110,5 +130,11 @@ func SetUpCalendar() {
 		BelgranoDay,
 		ar.BelgranoDay,
 		IntentoAsesinatoCFK,
+		FeriadoTuristicoOctubre2022,
+		FeriadoTuristicoNoviembre2022,
+		FeriadoTuristicoDiciembre2022,
+		FeriadoPuenteDiversidadCultural,
+		FeriadoDiversidadCultural,
 	)
+
 }
