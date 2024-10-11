@@ -475,7 +475,8 @@ func yieldWrapper(c *gin.Context) {
 			return
 		}
 		issueDate, _ := time.Parse(DateFormat, (Bonds[index].IssueDate.Format(DateFormat)))
-		coef2, err = getCoefficient(calendar.WorkdaysFrom(issueDate, offset), extendIndex, &Coef)
+		tmpFecha := calendar.WorkdaysFrom(issueDate, offset)
+		coef2, err = getCoefficient(tmpFecha, extendIndex, &Coef)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
 			return
