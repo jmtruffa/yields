@@ -14592,5 +14592,186 @@
         ],
         "Index": "",
         "Offset": 0
+    },
+    {
+        "ID": "144",
+        "Ticker": "TZXY5",
+        "IssueDate": "2024-11-01",
+        "Maturity": "2025-05-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2025-05-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "145",
+        "Ticker": "TZXO5",
+        "IssueDate": "2024-11-01",
+        "Maturity": "2025-10-31",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2025-10-31",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "146",
+        "Ticker": "TZXO6",
+        "IssueDate": "2024-11-01",
+        "Maturity": "2026-10-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2026-10-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "147",
+        "Ticker": "TZXM6",
+        "IssueDate": "2024-04-30",
+        "Maturity": "2026-03-31",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2026-03-31",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "148",
+        "Ticker": "TZXM7",
+        "IssueDate": "2024-05-17",
+        "Maturity": "2027-03-31",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2027-03-31",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "CER",
+        "Offset": -10
+    },
+    {
+        "ID": "149",
+        "Ticker": "TZV25",
+        "IssueDate": "2024-02-28",
+        "Maturity": "2025-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2025-06-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "150",
+        "Ticker": "TZVD5",
+        "IssueDate": "2024-07-01",
+        "Maturity": "2025-12-15",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2025-12-15",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "151",
+        "Ticker": "TZV26",
+        "IssueDate": "2024-02-28",
+        "Maturity": "2026-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2026-06-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "152",
+        "Ticker": "TZV27",
+        "IssueDate": "2024-07-12",
+        "Maturity": "2027-06-30",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2027-06-30",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
+    },
+    {
+        "ID": "153",
+        "Ticker": "D16E6",
+        "IssueDate": "2025-02-14",
+        "Maturity": "2026-01-16",
+        "Coupon": 0,
+        "Cashflow": [
+            {
+                "Date": "2026-01-16",
+                "Rate": 0,
+                "Amort": 100,
+                "Residual": 0,
+                "Amount": 100
+            }
+        ],
+        "Index": "",
+        "Offset": 0
     }
+    
 ]
