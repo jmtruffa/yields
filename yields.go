@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"bytes"
 	"encoding/csv"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jasonlvhit/gocron"
 )
@@ -111,25 +111,36 @@ func main() {
 
 	// start of the router and endpoints
 	// start the router in debug mode
-	gin.SetMode(gin.DebugMode)
-
+	//gin.SetMode(gin.DebugMode)
 	//gin.SetMode(gin.ReleaseMode)
+
+	// Server mode via env (defaults to release)
+	mode := os.Getenv("GIN_MODE")
+	if mode == "" {
+		mode = gin.ReleaseMode
+	}
+	gin.SetMode(mode)
+
 	//router := gin.New()
 	fmt.Println("Server is running on port 8080")
-	router := gin.Default() //En caso de querer ver los logs de las requests
+	// Router: minimal en producción
+	router := gin.New()
+	router.Use(gin.Recovery())
+	//router := gin.Default() //En caso de querer ver los logs de las requests
 	// CORS for https://foo.com and https://github.com origins, allowing:
 	// - PUT and PATCH methods
 	// - Origin header
 	// - Credentials share
 	// - Preflight requests cached for 12 hours
-	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"}, // or use https://foo.com, https://github.com, etc
-		AllowMethods: []string{"GET", "POST"},
-		AllowHeaders: []string{"Origin"},
-		//ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	// No voy a usar CORS por ahora porque todo va a correr en localhost
+	// router.Use(cors.New(cors.Config{
+	// 	AllowOrigins: []string{"*"}, // or use https://foo.com, https://github.com, etc
+	// 	AllowMethods: []string{"GET", "POST"},
+	// 	AllowHeaders: []string{"Origin"},
+	// 	//ExposeHeaders:    []string{"Content-Length"},
+	// 	AllowCredentials: true,
+	// 	MaxAge:           12 * time.Hour,
+	// }))
 	//router.Run()
 	router.GET("/yield", yieldWrapper)
 	router.GET("/apr", aprWrapper)
