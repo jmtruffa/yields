@@ -242,7 +242,7 @@ func aprWrapper(c *gin.Context) {
 	coupon := Bonds[index].Coupon //I could have used 0 but this is more informative
 	residual := cashFlow[0].Residual + cashFlow[0].Amort
 	accInt := (accDays / 360 * coupon) * 100
-	techValue := ratio * residual
+	techValue := ratio*residual + accInt
 	parity := price / techValue * 100
 
 	c.JSON(http.StatusOK, gin.H{
