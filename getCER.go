@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"math"
@@ -17,6 +18,25 @@ var Coef []CER
 type CER struct {
 	Date time.Time
 	CER  float64
+}
+
+// Reintenta cargar el CER hasta éxito, con espera 'interval' entre intentos.
+// Se puede cancelar pasando un context con cancel.
+func LoadCERWithRetry(ctx context.Context, interval time.Duration) {
+	for {
+		if err := getCER(); err == nil {
+			fmt.Println("CER loaded successfully")
+			return
+		} else {
+			fmt.Println("Error loading CER, retry in", interval)
+		}
+		select {
+		case <-time.After(interval):
+		case <-ctx.Done():
+			fmt.Println("CER retry canceled:", ctx.Err())
+			return
+		}
+	}
 }
 
 func getCoefficient(date time.Time, extendIndex float64, coef *[]CER) (float64, error) {

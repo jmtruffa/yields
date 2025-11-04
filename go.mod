@@ -6,8 +6,9 @@ require github.com/gin-gonic/gin v1.8.1
 
 require github.com/lib/pq v1.10.9
 
+require github.com/stretchr/testify v1.8.0 // indirect
+
 require (
-	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

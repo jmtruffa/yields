@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -94,11 +95,17 @@ func (d Fecha) Format(s string) string {
 }
 
 func executeCronJob() {
-	gocron.Every(24).Hours().Do(getCER)
+	gocron.Every(24).Hours().Do(func() {
+		LoadCERWithRetry(context.Background(), time.Minute)
+	})
 	<-gocron.Start()
 }
 
 func main() {
+	// Hacemos una salida a stdout para que quede log del arranque del servicio, incorporando la hora y día
+	fmt.Println("==================================================")
+	fmt.Println("Arrancando servicio yields...", time.Now().Format("2006-01-02 15:04:05"))
+
 	// SetUpCalendar creates the calendar and set ups the holidays for Argentina.
 	SetUpCalendar()
 	go executeCronJob() // this will make the cron run in the background.
@@ -107,7 +114,9 @@ func main() {
 	getBondsData()
 
 	// Load the CER data into Coef
-	getCER()
+	// Load CER con reintentos cada 1 minuto hasta éxito
+	LoadCERWithRetry(context.Background(), time.Minute)
+	//getCER()
 
 	// start of the router and endpoints
 	// start the router in debug mode
@@ -123,6 +132,7 @@ func main() {
 
 	//router := gin.New()
 	fmt.Println("Server is running on port 8080")
+	fmt.Println("==================================================")
 	// Router: minimal en producción
 	router := gin.New()
 	router.Use(gin.Recovery())
