@@ -124,6 +124,7 @@ func main() {
 	//gin.SetMode(gin.ReleaseMode)
 
 	// Server mode via env (defaults to release)
+	// Valores variable de entorno: GIN_MODE='debug' o GIN_MODE='release'
 	mode := os.Getenv("GIN_MODE")
 	if mode == "" {
 		mode = gin.ReleaseMode
@@ -136,6 +137,10 @@ func main() {
 	// Router: minimal en producción
 	router := gin.New()
 	router.Use(gin.Recovery())
+
+	if gin.Mode() == gin.DebugMode {
+		router.Use(gin.Logger())
+	}
 	//router := gin.Default() //En caso de querer ver los logs de las requests
 	// CORS for https://foo.com and https://github.com origins, allowing:
 	// - PUT and PATCH methods
