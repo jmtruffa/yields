@@ -25,7 +25,13 @@ type Fecha time.Time
 
 const DateFormat = "2006-01-02"
 
-var Bonds []Bond
+var (
+	Bonds    []Bond
+	bondRepo *BondRepository
+)
+
+// Flag para considerar /apr deprecado
+const aprDeprecatedMsg = "Endpoint /apr deprecado. Use /yield (maneja cero cupón automáticamente)."
 
 // struct to use with extendedInfo func
 type extInfo struct {
@@ -49,14 +55,15 @@ type Flujo struct {
 }
 
 type Bond struct {
-	ID        string
-	Ticker    string
-	IssueDate Fecha
-	Maturity  Fecha
-	Coupon    float64
-	Cashflow  []Flujo
-	Index     string
-	Offset    int // Indexed bonds uses offset as date lookback period for the Index. In CER adjusted bonds this is set to 10 working days.
+	ID           string
+	Ticker       string
+	IssueDate    Fecha
+	Maturity     Fecha
+	Coupon       float64
+	Cashflow     []Flujo
+	Index        string
+	Offset       int // Indexed bonds uses offset as date lookback period for the Index. In CER adjusted bonds this is set to 10 working days.
+	DayCountConv int // Day count convention: 1=30/360, 2=Actual/365, 3=Actual/Actual, 4=Actual/360
 }
 
 // embed methods in the custom struct to be able to use them
@@ -111,7 +118,28 @@ func main() {
 	go executeCronJob() // this will make the cron run in the background.
 
 	// load json with all the bond's data and handle any errors
-	getBondsData()
+	ctx := context.Background()
+	var err error
+	bondRepo, err = NewBondRepository()
+	if err != nil {
+		panic(fmt.Sprintf("Error inicializando repo de bonos: %v", err))
+	}
+
+	if err := bondRepo.EnsureSchema(ctx); err != nil {
+		panic(fmt.Sprintf("Error asegurando schema de bonos: %v", err))
+	}
+
+	if os.Getenv("BOND_SEED_FROM_JSON") == "1" {
+		if err := bondRepo.SeedFromJSON(ctx, "./bonds.json"); err != nil {
+			fmt.Println("Error al seedear bonos desde JSON:", err)
+		} else {
+			fmt.Println("Seed de bonos desde JSON completado")
+		}
+	}
+
+	if err := getBondsData(ctx); err != nil {
+		panic(fmt.Sprintf("Error cargando bonos: %v", err))
+	}
 
 	// Load the CER data into Coef
 	// Load CER con reintentos cada 1 minuto hasta éxito
@@ -158,7 +186,7 @@ func main() {
 	// }))
 	//router.Run()
 	router.GET("/yield", yieldWrapper)
-	router.GET("/apr", aprWrapper)
+	router.GET("/apr", aprDeprecatedWrapper)
 	router.GET("/price", priceWrapper)
 	router.GET("/schedule", scheduleWrapper)
 	router.POST("/upload", uploadWrapper)
@@ -168,125 +196,15 @@ func main() {
 }
 
 func aprWrapper(c *gin.Context) {
-	//Params: ticker, settlementDate, price, InitialFee, endingFee, extendIndex
-	// extendIndex: rate at which extend Index (CER). In yearly basis.
-	ticker := strings.ToUpper(c.Query("ticker"))
-
-	settle, _ := c.GetQuery("settlementDate")
-	settlementDate, error := time.Parse("2006-01-02", settle)
-	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Settlement Date. ": "Invalid date format"})
-		return
-	}
-	priceTemp, _ := c.GetQuery("price")
-	price, error := strconv.ParseFloat(priceTemp, 64)
-	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Price. ": error.Error()})
-		return
-	}
-	initialFeeTemp, _ := c.GetQuery("initialFee")
-	initialFee, error := strconv.ParseFloat(initialFeeTemp, 64)
-	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Initial Fee. ": error.Error()})
-		return
-	}
-	endingFeeTemp, _ := c.GetQuery("endingFee")
-	endingFee, error := strconv.ParseFloat(endingFeeTemp, 64)
-	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Ending Fee. ": error.Error()})
-		return
-	}
-
-	extIndex, _ := c.GetQuery("extendIndex")
-	if extIndex == "" { // if extendIndex is empty, set it to 0
-		extIndex = "0"
-	}
-
-	extendIndex, error := strconv.ParseFloat(extIndex, 64)
-	if error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Extended Index. Value maybe misisng or not numeric	": error.Error()})
-		return
-	}
-
-	// should check number should be >= 0
-	if extendIndex < 0 {
-		// s// var err error
-		c.JSON(http.StatusBadRequest, gin.H{"Extended Index should be greater or equal to 0": "Error"})
-		return
-	}
-
-	// Get the cashflow only if the ticker is a valid zero coupon bond
-
-	cashFlow, index, error := getCashFlow(ticker)
-	if error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"Error: ": "Ticker not found"})
-		return
-	} else if Bonds[index].Coupon != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"Error in Coupon. ": "The coupon of this bond is not zero. Try with endopoint /yield"})
-		return
-	}
-
-	// adjust price, if the bond is indexed, by using the ratio calculated by dividing the index of settlementDate by the index of IssueDate.
-	// There's an offset variable to adjust the lookback period for the index.
-
-	ratio := 1.0
-	var coef1 float64
-	var coef2 float64
-	var coefFecha time.Time
-
-	if Bonds[index].Index != "" { // assuming for now that only one type of index is used: CER
-
-		offset := Bonds[index].Offset
-
-		type error interface {
-			Error() string
-		}
-		var err error
-
-		coefFecha = calendar.WorkdaysFrom(settlementDate, offset)
-		coef1, err = getCoefficient(coefFecha, extendIndex, &Coef)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
-			return
-		}
-		issueDate, _ := time.Parse(DateFormat, (Bonds[index].IssueDate.Format(DateFormat)))
-		coef2, err = getCoefficient(calendar.WorkdaysFrom(issueDate, offset), extendIndex, &Coef)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"Error in CER. ": err.Error()})
-			return
-		}
-
-		ratio = coef1 / coef2
-
-	}
-
-	days := time.Time(cashFlow[0].Date).Sub(settlementDate).Hours() / 24
-	r := ((100*(1-endingFee))/((price*(1+initialFee))/ratio) - 1) * (365 / days)
-	mduration := (days / 365) / (1 + r)
-	// va desde issueDate porque es zero coupon
-	accDays := time.Time(settlementDate).Sub(time.Time(Bonds[index].IssueDate)).Hours() / 24
-	coupon := Bonds[index].Coupon //I could have used 0 but this is more informative
-	residual := cashFlow[0].Residual + cashFlow[0].Amort
-	accInt := (accDays / 360 * coupon) * 100
-	techValue := ratio*residual + accInt
-	parity := price / techValue * 100
-
-	c.JSON(http.StatusOK, gin.H{
-		"Yield":                 r,
-		"MDuration":             mduration,
-		"AccrualDays":           accDays,
-		"CurrentCoupon: ":       coupon,
-		"Residual":              residual,
-		"AccruedInterest":       accInt,
-		"TechnicalValue":        techValue,
-		"Parity":                parity,
-		"LastCoupon":            "N/A",
-		"Coef Used":             coef1,
-		"Coef Issue":            coef2,
-		"Coef Fecha de Cálculo": Fecha(coefFecha),
-		"Maturity":              Bonds[index].Maturity,
+	c.Header("Warning", aprDeprecatedMsg)
+	c.JSON(http.StatusGone, gin.H{
+		"error": aprDeprecatedMsg,
 	})
+}
 
+// Wrapper de compatibilidad para /apr
+func aprDeprecatedWrapper(c *gin.Context) {
+	aprWrapper(c)
 }
 
 func getBondsWrapper(c *gin.Context) {
@@ -314,7 +232,24 @@ func uploadWrapper(c *gin.Context) {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	upload.ID = strings.ToUpper(strconv.Itoa(len(Bonds) + 1))
+	upload.Ticker = strings.ToUpper(upload.Ticker)
+
+	if bondRepo == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Repositorio de bonos no inicializado",
+		})
+		return
+	}
+
+	newID, err := bondRepo.InsertBondWithCashflows(c.Request.Context(), &upload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Error al persistir bono: %v", err),
+		})
+		return
+	}
+
+	upload.ID = newID
 	upload.Ticker = strings.ToUpper(upload.Ticker)
 	Bonds = append(Bonds, upload)
 
@@ -322,26 +257,6 @@ func uploadWrapper(c *gin.Context) {
 		"Result":      "Bond uploaded",
 		"Assigned ID": upload.ID,
 	})
-
-	jsonOut, err := json.Marshal(Bonds)
-	if err != nil {
-		fmt.Println("Error when marshalling:", err)
-	}
-	// backup the file containing the data first
-	dest := "./bonds_" + time.Now().Format("2006-01-02") + ".json"
-	orig := "./bonds.json"
-	cpFile, err := ioutil.ReadFile(orig)
-	if err != nil {
-		fmt.Print(err)
-	}
-	err = ioutil.WriteFile(dest, cpFile, 0644)
-	if err != nil {
-		fmt.Println("Error when copying:", err)
-	}
-	err = ioutil.WriteFile("./bonds.json", jsonOut, 0644)
-	if err != nil {
-		fmt.Println("Error when writing:", err)
-	}
 }
 
 func scheduleWrapper(c *gin.Context) {
@@ -417,12 +332,27 @@ func getScheduleOfPayments(cashFlow *[]Flujo, settlementDate *time.Time) []Flujo
 }
 
 func getCashFlow(ticker string) ([]Flujo, int, error) {
+	// Normalizar ticker a mayúsculas para evitar problemas de case sensitivity
+	ticker = strings.ToUpper(ticker)
 	for i, bond := range Bonds {
 		if bond.Ticker == ticker {
 			return bond.Cashflow, i, nil
 		}
 	}
-	return nil, -1, errors.New("ticker not found")
+	// En modo debug, mostrar información útil
+	if gin.Mode() == gin.DebugMode {
+		fmt.Printf("DEBUG: Ticker '%s' no encontrado. Total de bonos cargados: %d\n", ticker, len(Bonds))
+		if len(Bonds) > 0 && len(Bonds) <= 10 {
+			fmt.Printf("DEBUG: Tickers disponibles: %v\n", func() []string {
+				var tickers []string
+				for _, b := range Bonds {
+					tickers = append(tickers, b.Ticker)
+				}
+				return tickers
+			}())
+		}
+	}
+	return nil, -1, fmt.Errorf("ticker '%s' not found", ticker)
 }
 
 func yieldWrapper(c *gin.Context) {
@@ -478,9 +408,7 @@ func yieldWrapper(c *gin.Context) {
 		return
 	}
 
-	// adjust price, if the bond is indexed, by using the ratio calculated by dividing the index of settlementDate by the index of IssueDate.
-	// There's an offset variable to adjust the lookback period for the index.
-
+	// Ajuste por índice (CER) previo, para usar en ambos caminos (cero cupón y general)
 	ratio := 1.0
 	var coef1 float64
 	var coef2 float64
@@ -512,6 +440,64 @@ func yieldWrapper(c *gin.Context) {
 
 	}
 
+	// Unificar: si es bono cero cupón (un solo flujo futuro) usamos fórmula cerrada como /apr
+	if len(cashFlow) == 1 {
+		dayCountConv := Bonds[index].DayCountConv
+		if dayCountConv == 0 {
+			dayCountConv = DayCount30_360 // Default a 30/360
+		}
+
+		// Calcular fracción de año hasta vencimiento según convención
+		maturityDate := time.Time(cashFlow[0].Date)
+		yearFraction := calculateDays(dayCountConv, settlementDate, maturityDate)
+
+		// Calcular yield usando la fracción de año correcta
+		// r = ((100*(1-endingFee))/(price*(1+initialFee)/ratio) - 1) / yearFraction
+		r := ((100*(1-endingFee))/((price*(1+initialFee))/ratio) - 1) / yearFraction
+		mduration := yearFraction / (1 + r)
+
+		// Calcular días devengados desde emisión
+		accDaysFloat := calculateDays(dayCountConv, time.Time(Bonds[index].IssueDate), settlementDate)
+		accDays := int(settlementDate.Sub(time.Time(Bonds[index].IssueDate)).Hours() / 24) // Para display
+
+		coupon := Bonds[index].Coupon
+		residual := cashFlow[0].Residual + cashFlow[0].Amort
+
+		// Calcular interés devengado según convención
+		var accInt float64
+		if dayCountConv == DayCountActualActual {
+			daysInYear := calculateDaysInYear(settlementDate)
+			actualDays := settlementDate.Sub(time.Time(Bonds[index].IssueDate)).Hours() / 24
+			accInt = (actualDays / daysInYear * coupon) * residual * ratio
+		} else {
+			accInt = accDaysFloat * coupon * residual * ratio
+		}
+
+		techValue := ratio*residual + accInt
+		parity := price / techValue * 100
+
+		c.JSON(http.StatusOK, gin.H{
+			"Yield":                 r,
+			"MDuration":             mduration,
+			"AccrualDays":           accDays,
+			"CurrentCoupon: ":       coupon,
+			"Residual":              residual,
+			"AccruedInterest":       accInt,
+			"TechnicalValue":        techValue,
+			"Parity":                parity,
+			"LastCoupon":            "N/A",
+			"Coef Used":             coef1,
+			"Coef Issue":            coef2,
+			"Coef Fecha de Cálculo": Fecha(coefFecha),
+			"Maturity":              Bonds[index].Maturity,
+			"Note":                  "Cero cupón (fórmula cerrada). /apr está deprecado.",
+		})
+		return
+	}
+
+	// adjust price, if the bond is indexed, by using the ratio calculated by dividing the index of settlementDate by the index of IssueDate.
+	// There's an offset variable to adjust the lookback period for the index.
+
 	price = price / ratio
 
 	r, error, cfIndex := Yield(cashFlow, price, settlementDate, initialFee, endingFee)
@@ -530,8 +516,11 @@ func yieldWrapper(c *gin.Context) {
 	origPrice := price * ratio // back to price to calculate parity correctly
 
 	// need to adapt to the new way of calling extendedInfo with a struct.
-
-	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio)
+	dayCountConv := Bonds[index].DayCountConv
+	if dayCountConv == 0 {
+		dayCountConv = DayCount30_360 // Default a 30/360
+	}
+	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio, dayCountConv)
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -649,9 +638,12 @@ func priceWrapper(c *gin.Context) {
 	p = p * ratio
 
 	// Use index to calculate accDays, Parity
-
+	dayCountConv := Bonds[index].DayCountConv
+	if dayCountConv == 0 {
+		dayCountConv = DayCount30_360 // Default a 30/360
+	}
 	origPrice := p / ratio
-	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio)
+	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio, dayCountConv)
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &p, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -673,7 +665,7 @@ func priceWrapper(c *gin.Context) {
 
 }
 
-func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int, ratio float64) extInfo {
+func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIndex int, ratio float64, dayCountConv int) extInfo {
 	var info extInfo
 
 	//teng que dejar cfIndex = 0 siempre y cuando el bono sea zerocoupon
@@ -684,15 +676,36 @@ func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIn
 		info.residual = 100
 		info.lastCoupon = Fecha(*settlementDate)
 		info.lastAmort = 0
+		info.accInt = 0 // No hay interés devengado antes del primer cupón
 	} else {
-		info.accDays = int(time.Time(*settlementDate).Sub(time.Time((*cashflow)[cfIndex].Date)).Hours() / 24) // accDays from last coupon
-		info.currCoupon = (*cashflow)[cfIndex+1].Rate                                                         //because is the coupon on the next cashflow that will be paid.
-		info.residual = (*cashflow)[cfIndex-1].Residual
+		// Calcular días devengados según la convención
+		lastCouponDate := time.Time((*cashflow)[cfIndex].Date)
+		accDaysFloat := calculateDays(dayCountConv, lastCouponDate, *settlementDate)
+
+		// Para Actual/Actual, necesitamos calcular el año fraccional correctamente
+		var yearFraction float64
+		if dayCountConv == DayCountActualActual {
+			// Calcular días reales del período
+			actualDays := settlementDate.Sub(lastCouponDate).Hours() / 24
+			// Calcular días del año para la fecha del último cupón
+			daysInYear := calculateDaysInYear(lastCouponDate)
+			yearFraction = actualDays / daysInYear
+		} else {
+			yearFraction = accDaysFloat
+		}
+
+		info.accDays = int(settlementDate.Sub(lastCouponDate).Hours() / 24) // Mantener días enteros para display
+		info.currCoupon = (*cashflow)[cfIndex+1].Rate                       //because is the coupon on the next cashflow that will be paid.
+		// Residual debe reflejar el saldo vivo luego del último flujo aplicado.
+		// Tomamos el residual del flujo actual (cfIndex) que ya incorpora la amortización pagada en ese cupón.
+		info.residual = (*cashflow)[cfIndex].Residual
 		info.lastCoupon = (*cashflow)[cfIndex].Date
 		info.lastAmort = (*cashflow)[cfIndex].Amort
+
+		// Calcular interés devengado usando la fracción de año correcta
+		info.accInt = yearFraction * info.currCoupon * info.residual * ratio
 	}
 
-	info.accInt = (float64(info.accDays) / 360 * info.currCoupon) * info.residual * ratio
 	info.techValue = float64(info.accInt) + info.residual*ratio
 	info.parity = *p / info.techValue * 100
 
@@ -797,23 +810,25 @@ func Price(flow []Flujo, rate float64, settlementDate time.Time, initialFee floa
 	return price * (1 + initialFee), nil, index
 }
 
-func getBondsData() {
+func getBondsData(ctx context.Context) error {
 	fmt.Println("Leyendo data de bonos...")
 	fmt.Println()
 
-	data, err := ioutil.ReadFile("./bonds.json")
-	if err != nil {
-		fmt.Print(err)
+	if bondRepo == nil {
+		return fmt.Errorf("bondRepo no inicializado")
 	}
-	// json data
-	// unmarshall the loaded JSON
-	err = json.Unmarshal([]byte(data), &Bonds)
+
+	var err error
+	Bonds, err = bondRepo.LoadAllBonds(ctx)
 	if err != nil {
-		fmt.Println("error:", err)
+		return err
 	}
+
 	fmt.Println()
 	fmt.Println("Llenado de data de bonos exitosa")
 	fmt.Println("Cantidad de bonos cargados: ", len(Bonds))
 	fmt.Println()
+
+	return nil
 
 }
