@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"os"
@@ -13,8 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"archive/zip"
 	"bytes"
 	"encoding/csv"
+	"mime/multipart"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jasonlvhit/gocron"
@@ -102,7 +105,8 @@ func (d Fecha) Format(s string) string {
 }
 
 func executeCronJob() {
-	gocron.Every(24).Hours().Do(func() {
+	// Refresca CER cada 12 horas
+	gocron.Every(12).Hours().Do(func() {
 		LoadCERWithRetry(context.Background(), time.Minute)
 	})
 	<-gocron.Start()
@@ -219,21 +223,10 @@ func getBondsWrapper(c *gin.Context) {
 }
 
 func uploadWrapper(c *gin.Context) {
-	var upload Bond
-	jsonData, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	// API key required
+	if !validateAPIKey(c) {
 		return
 	}
-
-	err = json.Unmarshal([]byte(jsonData), &upload)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-	upload.Ticker = strings.ToUpper(upload.Ticker)
-
 	if bondRepo == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Repositorio de bonos no inicializado",
@@ -241,58 +234,453 @@ func uploadWrapper(c *gin.Context) {
 		return
 	}
 
-	newID, err := bondRepo.InsertBondWithCashflows(c.Request.Context(), &upload)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Error al persistir bono: %v", err),
-		})
+	// Refrescar cache en memoria por si hubo cambios externos (ej. deletes manuales)
+	_ = getBondsData(c.Request.Context())
+
+	// Esperamos multipart con dos archivos: bonds (CSV) y cashflows (CSV)
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "multipart parse error: " + err.Error()})
 		return
 	}
 
-	upload.ID = newID
-	upload.Ticker = strings.ToUpper(upload.Ticker)
-	Bonds = append(Bonds, upload)
+	bondsFile, err := getFileFromForm(c, "bonds")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bonds.csv requerido: " + err.Error()})
+		return
+	}
+	cfFile, err := getFileFromForm(c, "cashflows")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cashflows.csv requerido: " + err.Error()})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"Result":      "Bond uploaded",
-		"Assigned ID": upload.ID,
-	})
+	bondsCSV, err := bondsFile.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no se pudo abrir bonds.csv: " + err.Error()})
+		return
+	}
+	defer bondsCSV.Close()
+
+	cfCSV, err := cfFile.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no se pudo abrir cashflows.csv: " + err.Error()})
+		return
+	}
+	defer cfCSV.Close()
+
+	bondsParsed, err := parseBondsCSV(bondsCSV)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error parseando bonds.csv: " + err.Error()})
+		return
+	}
+	cfParsed, err := parseCashflowsCSV(cfCSV)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error parseando cashflows.csv: " + err.Error()})
+		return
+	}
+
+	summary := processUpload(c.Request.Context(), bondsParsed, cfParsed)
+
+	// Refrescar cache en memoria si hubo inserciones/updates
+	if summary.Inserted > 0 || summary.Updated > 0 {
+		_ = getBondsData(c.Request.Context())
+	}
+
+	c.JSON(http.StatusOK, summary)
+}
+
+// ===== Helpers para /upload =====
+type bondCSVRow struct {
+	Ticker       string
+	IssueDate    time.Time
+	Maturity     time.Time
+	Coupon       float64
+	Index        string
+	Offset       int
+	DayCountConv int
+	Active       bool
+	Operation    string // "insert" (default) | "update"
+}
+
+type cfCSVRow struct {
+	Ticker   string
+	Seq      int
+	Date     time.Time
+	Rate     float64
+	Amort    float64
+	Residual float64
+	Amount   float64
+}
+
+type uploadSummary struct {
+	Inserted int      `json:"inserted"`
+	Updated  int      `json:"updated"`
+	Skipped  int      `json:"skipped"`
+	Errors   []string `json:"errors"`
+	Missing  []string `json:"missing_cashflows"`
+}
+
+func formatFloat(f float64) string {
+	return strconv.FormatFloat(f, 'f', -1, 64)
+}
+
+func getFileFromForm(c *gin.Context, field string) (*multipart.FileHeader, error) {
+	fh, err := c.FormFile(field)
+	if err != nil {
+		return nil, err
+	}
+	return fh, nil
+}
+
+func parseBondsCSV(r io.Reader) ([]bondCSVRow, error) {
+	cr := csv.NewReader(r)
+	headers, err := cr.Read()
+	if err != nil {
+		return nil, err
+	}
+	col := map[string]int{}
+	for i, h := range headers {
+		col[strings.ToLower(strings.TrimSpace(h))] = i
+	}
+	req := []string{"ticker", "issue_date", "maturity", "coupon"}
+	for _, k := range req {
+		if _, ok := col[k]; !ok {
+			return nil, fmt.Errorf("columna requerida faltante: %s", k)
+		}
+	}
+	var rows []bondCSVRow
+	for {
+		rec, err := cr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		get := func(name string) string {
+			if idx, ok := col[name]; ok && idx < len(rec) {
+				return strings.TrimSpace(rec[idx])
+			}
+			return ""
+		}
+		ticker := strings.ToUpper(get("ticker"))
+		if ticker == "" {
+			continue
+		}
+		issueDate, err := time.Parse(DateFormat, get("issue_date"))
+		if err != nil {
+			return nil, fmt.Errorf("ticker %s: issue_date invalido: %v", ticker, err)
+		}
+		maturity, err := time.Parse(DateFormat, get("maturity"))
+		if err != nil {
+			return nil, fmt.Errorf("ticker %s: maturity invalido: %v", ticker, err)
+		}
+		coupon, err := strconv.ParseFloat(get("coupon"), 64)
+		if err != nil {
+			return nil, fmt.Errorf("ticker %s: coupon invalido: %v", ticker, err)
+		}
+		offset := 0
+		if v := get("offset"); v != "" {
+			if off, err := strconv.Atoi(v); err == nil {
+				offset = off
+			}
+		}
+		dayConv := 1
+		if v := get("day_count_conv"); v != "" {
+			if dc, err := strconv.Atoi(v); err == nil {
+				dayConv = dc
+			}
+		}
+		active := true
+		if v := strings.ToLower(get("active")); v == "false" || v == "0" {
+			active = false
+		}
+		op := strings.ToLower(get("operation"))
+		if op == "" {
+			op = "insert"
+		}
+		rows = append(rows, bondCSVRow{
+			Ticker:       ticker,
+			IssueDate:    issueDate,
+			Maturity:     maturity,
+			Coupon:       coupon,
+			Index:        get("index"),
+			Offset:       offset,
+			DayCountConv: dayConv,
+			Active:       active,
+			Operation:    op,
+		})
+	}
+	return rows, nil
+}
+
+func parseCashflowsCSV(r io.Reader) (map[string][]cfCSVRow, error) {
+	cr := csv.NewReader(r)
+	headers, err := cr.Read()
+	if err != nil {
+		return nil, err
+	}
+	col := map[string]int{}
+	for i, h := range headers {
+		col[strings.ToLower(strings.TrimSpace(h))] = i
+	}
+	req := []string{"ticker", "date", "rate", "amort", "residual", "amount"}
+	for _, k := range req {
+		if _, ok := col[k]; !ok {
+			return nil, fmt.Errorf("columna requerida faltante en cashflows: %s", k)
+		}
+	}
+	res := make(map[string][]cfCSVRow)
+	for {
+		rec, err := cr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		get := func(name string) string {
+			if idx, ok := col[name]; ok && idx < len(rec) {
+				return strings.TrimSpace(rec[idx])
+			}
+			return ""
+		}
+		ticker := strings.ToUpper(get("ticker"))
+		if ticker == "" {
+			continue
+		}
+		date, err := time.Parse(DateFormat, get("date"))
+		if err != nil {
+			return nil, fmt.Errorf("ticker %s: date invalida: %v", ticker, err)
+		}
+		rate, _ := strconv.ParseFloat(get("rate"), 64)
+		amort, _ := strconv.ParseFloat(get("amort"), 64)
+		residual, _ := strconv.ParseFloat(get("residual"), 64)
+		amount, _ := strconv.ParseFloat(get("amount"), 64)
+		res[ticker] = append(res[ticker], cfCSVRow{
+			Ticker:   ticker,
+			Date:     date,
+			Rate:     rate,
+			Amort:    amort,
+			Residual: residual,
+			Amount:   amount,
+		})
+	}
+	return res, nil
+}
+
+func processUpload(ctx context.Context, bonds []bondCSVRow, cf map[string][]cfCSVRow) uploadSummary {
+	summary := uploadSummary{}
+	// mapa de existencia actual
+	existing := make(map[string]bool)
+	for _, b := range Bonds {
+		existing[b.Ticker] = true
+	}
+
+	for _, b := range bonds {
+		flows, ok := cf[b.Ticker]
+		if !ok || len(flows) == 0 {
+			summary.Skipped++
+			summary.Missing = append(summary.Missing, b.Ticker)
+			continue
+		}
+		op := strings.ToLower(b.Operation)
+		if op == "" {
+			op = "insert"
+		}
+		if existing[b.Ticker] && op != "update" {
+			summary.Skipped++
+			summary.Errors = append(summary.Errors, fmt.Sprintf("ticker %s existe y no trae operation=update", b.Ticker))
+			continue
+		}
+		if b.DayCountConv < 1 || b.DayCountConv > 4 {
+			summary.Errors = append(summary.Errors, fmt.Sprintf("ticker %s: day_count_conv invalido", b.Ticker))
+			summary.Skipped++
+			continue
+		}
+		if b.Maturity.Before(b.IssueDate) {
+			summary.Errors = append(summary.Errors, fmt.Sprintf("ticker %s: maturity antes de issue_date", b.Ticker))
+			summary.Skipped++
+			continue
+		}
+
+		// ordenar cashflows por fecha
+		sort.Slice(flows, func(i, j int) bool {
+			return flows[i].Date.Before(flows[j].Date)
+		})
+		// validar residual no creciente
+		valid := true
+		for i := 1; i < len(flows); i++ {
+			if flows[i].Residual > flows[i-1].Residual+1e-9 {
+				summary.Errors = append(summary.Errors, fmt.Sprintf("ticker %s: residual creciente en flujo %d", b.Ticker, i+1))
+				summary.Skipped++
+				valid = false
+				break
+			}
+		}
+		if !valid {
+			continue
+		}
+
+		// reasignar seq
+		for i := range flows {
+			flows[i].Seq = i + 1
+		}
+
+		// construir Bond
+		var bond Bond
+		bond.Ticker = b.Ticker
+		bond.IssueDate = Fecha(b.IssueDate)
+		bond.Maturity = Fecha(b.Maturity)
+		bond.Coupon = b.Coupon
+		bond.Index = b.Index
+		bond.Offset = b.Offset
+		bond.DayCountConv = b.DayCountConv
+		for _, f := range flows {
+			bond.Cashflow = append(bond.Cashflow, Flujo{
+				Date:     Fecha(f.Date),
+				Rate:     f.Rate,
+				Amort:    f.Amort,
+				Residual: f.Residual,
+				Amount:   f.Amount,
+			})
+		}
+
+		_, err := bondRepo.InsertBondWithCashflows(ctx, &bond)
+		if err != nil {
+			summary.Errors = append(summary.Errors, fmt.Sprintf("ticker %s: %v", b.Ticker, err))
+			summary.Skipped++
+			continue
+		}
+		if existing[b.Ticker] {
+			summary.Updated++
+		} else {
+			summary.Inserted++
+		}
+	}
+	return summary
 }
 
 func scheduleWrapper(c *gin.Context) {
-	ticker := strings.ToUpper(c.Query("ticker"))
-	settlementDate := c.Query("settlementDate")
-	if ticker == "" || settlementDate == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ticker and settlementDate are required",
-		})
-		return
+	tickersParam := c.QueryArray("ticker")
+	if len(tickersParam) == 0 {
+		if single := c.Query("ticker"); single != "" {
+			tickersParam = []string{single}
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "ticker is required"})
+			return
+		}
 	}
-	t, err := time.Parse(DateFormat, settlementDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid settlementDate",
-		})
-		return
+	cutoffParam := c.Query("settlementDate")
+	var cutoff *time.Time
+	if cutoffParam != "" {
+		t, err := time.Parse(DateFormat, cutoffParam)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid settlementDate"})
+			return
+		}
+		cutoff = &t
 	}
-	cashFlow, _, err := getCashFlow(ticker)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ticker not found",
-		})
-		return
-	}
-	scheduleOut := getScheduleOfPayments(&cashFlow, &t)
 
-	csvString := convertToCSV(scheduleOut)
-	c.Writer.Header().Set("Content-Type", "text/csv")
-	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s.csv", ticker))
-	c.Writer.WriteString(string(csvString))
+	type bondRow struct {
+		Ticker       string
+		IssueDate    string
+		Maturity     string
+		Coupon       float64
+		Index        string
+		Offset       int
+		DayCountConv int
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"schedule": scheduleOut,
-	})
-	c.Writer.Write(csvString)
+	missing := []string{}
+	var bondsOut []bondRow
+	var cashflowsOut [][]string
+
+	for _, tkr := range tickersParam {
+		ticker := strings.ToUpper(tkr)
+		cf, idx, err := getCashFlow(ticker)
+		if err != nil {
+			missing = append(missing, ticker)
+			continue
+		}
+		b := Bonds[idx]
+		bondsOut = append(bondsOut, bondRow{
+			Ticker:       b.Ticker,
+			IssueDate:    time.Time(b.IssueDate).Format(DateFormat),
+			Maturity:     time.Time(b.Maturity).Format(DateFormat),
+			Coupon:       b.Coupon,
+			Index:        b.Index,
+			Offset:       b.Offset,
+			DayCountConv: b.DayCountConv,
+		})
+
+		// filtrar por cutoff si aplica
+		filtered := cf
+		if cutoff != nil {
+			filtered = nil
+			for _, row := range cf {
+				if time.Time(row.Date).After(cutoff.Add(-24*time.Hour)) || time.Time(row.Date).Equal(*cutoff) {
+					filtered = append(filtered, row)
+				}
+			}
+		}
+
+		for i, row := range filtered {
+			cashflowsOut = append(cashflowsOut, []string{
+				ticker,
+				strconv.Itoa(i + 1),
+				time.Time(row.Date).Format(DateFormat),
+				formatFloat(row.Rate),
+				formatFloat(row.Amort),
+				formatFloat(row.Residual),
+				formatFloat(row.Amount),
+			})
+		}
+	}
+
+	// Si no hay bonos encontrados
+	if len(bondsOut) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "no tickers found", "missing": missing})
+		return
+	}
+
+	var buf bytes.Buffer
+	zipw := zip.NewWriter(&buf)
+
+	// bonds.csv
+	bondsFile, _ := zipw.Create("bonds.csv")
+	bw := csv.NewWriter(bondsFile)
+	_ = bw.Write([]string{"ticker", "issue_date", "maturity", "coupon", "index", "offset", "day_count_conv"})
+	for _, b := range bondsOut {
+		_ = bw.Write([]string{
+			b.Ticker,
+			b.IssueDate,
+			b.Maturity,
+			formatFloat(b.Coupon),
+			b.Index,
+			strconv.Itoa(b.Offset),
+			strconv.Itoa(b.DayCountConv),
+		})
+	}
+	bw.Flush()
+
+	// cashflows.csv
+	cfFile, _ := zipw.Create("cashflows.csv")
+	cfw := csv.NewWriter(cfFile)
+	_ = cfw.Write([]string{"ticker", "seq", "date", "rate", "amort", "residual", "amount"})
+	for _, row := range cashflowsOut {
+		_ = cfw.Write(row)
+	}
+	cfw.Flush()
+
+	zipw.Close()
+
+	c.Writer.Header().Set("Content-Type", "application/zip")
+	c.Writer.Header().Set("Content-Disposition", "attachment;filename=schedule.zip")
+	if len(missing) > 0 {
+		c.Writer.Header().Set("X-Missing-Tickers", strings.Join(missing, ","))
+	}
+	c.Writer.Write(buf.Bytes())
 }
 
 func convertToCSV(schedule []Flujo) []byte {
@@ -353,6 +741,29 @@ func getCashFlow(ticker string) ([]Flujo, int, error) {
 		}
 	}
 	return nil, -1, fmt.Errorf("ticker '%s' not found", ticker)
+}
+
+// ======= API Key validation =======
+func validateAPIKey(c *gin.Context) bool {
+	apiKey := c.GetHeader("X-API-Key")
+	if apiKey == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "API key missing"})
+		return false
+	}
+	if bondRepo == nil || bondRepo.db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "repository not initialized"})
+		return false
+	}
+	var active bool
+	err := bondRepo.db.QueryRowContext(c.Request.Context(),
+		`SELECT active FROM yields_api_keys WHERE api_key = $1`, apiKey).Scan(&active)
+	if err != nil || !active {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid api key"})
+		return false
+	}
+	_, _ = bondRepo.db.ExecContext(c.Request.Context(),
+		`UPDATE yields_api_keys SET last_used_at = now() WHERE api_key = $1`, apiKey)
+	return true
 }
 
 func yieldWrapper(c *gin.Context) {

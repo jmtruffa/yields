@@ -1,123 +1,140 @@
-This API returns the yield or price of a given pre-loaded bond in bonds.json
-The endpoint checks if the requested bond is zerocoupon.
- If bonds is index adjusted, it will look for the coefficientes of IssueDate, settlementDate and calculate a ratio. Works only with CER (http://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables_datos.asp?serie=3540&detalle=CER%A0(Base%202.2.2002=1))
+Yields API
+==========
 
+API en Go (Gin) para cálculos de bonos: yield, precio, paridad, valor técnico, cronograma de pagos y carga masiva vía CSV. Los bonos y flujos viven en PostgreSQL; el coeficiente CER se carga también desde la base. `/apr` está deprecado (usar `/yield`, que maneja cero cupón).
 
- The coefficients are stored in a sqlite3 database stored locally.
- There's a call in the getCER() that uses a python script to download and populate a sqlite database with the last series. It is called every time the API starts or after 24 hours from a cron job.
- Python should be installed on the system. 
- The two source files needed are included in the repo for you compiling convenience.
+Requisitos
+----------
+- Go 1.20+
+- PostgreSQL (variables: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`)
+- `GIN_MODE` (`debug` o `release`). Default: release.
+- Opcional: `BOND_SEED_FROM_JSON=1` para seed inicial desde `bonds.json`.
 
-The script implements Gin-gonic to set up an API and the following endpoints:
+Convenciones de días (`day_count_conv`)
+---------------------------------------
+1 = 30/360  
+2 = Actual/365  
+3 = Actual/Actual  
+4 = Actual/360  
 
-1.- yield
-2.- price
-3.- schedule
-4.- upload
-5.- bonds
-6.- apr
+Endpoints
+---------
 
-1.- yield 
+### GET /yield
+Calcula YTM dado un precio. Maneja bonos indexados (CER) y cero cupón.  
+Parámetros (query):
+- `ticker` (string, requerido)
+- `settlementDate` (YYYY-MM-DD, requerido)
+- `price` (float64, requerido)
+- `initialFee`, `endingFee` (float64, opcionales)
+- `extendIndex` (float64, opcional, tasa anual para extrapolar CER)
 
-Value: (float64) Yield: Returns ytm of the bond given its price and cashflow. Works with indexed and non-indexed bonds.
-      (float64) MDuration: Returns modified duration of the bond.
-      (int) AccrualDays: Accrual days since last interest payment.
-      (float64) CurrentCoupon: actual coupon based on date.
-      (float64) Residual: Outstanding principal amount.
-      (float64) AccruedInterest: Accrued interest since last coupon.
-      (float64) TechnicalValue: technical value.
-      (float64) Parity: parity of the bond.
-      (string) LastCoupon: date of last coupon.
-      (string) LasAmort: date of last amortization (payment of principal)
-      (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
-      (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
-      (string): CoefFechaCalculo: date of the coefficient used for settlement date.
-      (string): Maturity: of the bond.
+Devuelve: `Yield`, `MDuration`, `AccrualDays`, `CurrentCoupon`, `Residual`, `AccruedInterest`, `TechnicalValue`, `Parity`, `LastCoupon`, `LastAmort`, CER usado y `Maturity`.
 
+### GET /price
+Calcula precio dado una tasa.  
+Parámetros (query):
+- `ticker` (string, requerido)
+- `settlementDate` (YYYY-MM-DD, requerido)
+- `rate` (float64, requerido)
+- `initialFee`, `endingFee` (float64, opcionales)
+- `extendIndex` (float64, opcional)
 
-Params:
-  ticker: (string) ticker of the pre-loaded bond.
-  settlementDate: (string) in `"2006-01-02"` format. 
-  price: (float64) required price of the referred bond
-  initialFee: (float64) fee to charge on the beginning of the cashflow. Usually broker fee. Could be zero.
-  endingFee: (float64) fee to charge on the end of the cashflow. Usually broker fee. Could be zero.
-  extendIndex: (float64) rate (in anual terms) to use to extend coefficient in case it ends before settlement date.
-  
- 2.- price
- 
- Value: (float64) Price: price of the bond given its return and cashflow.
-        (float64) MDuration: Returns modified duration of the bond.
-        (int) AccrualDays: Accrual days since last interest payment.
-        (float64) CurrentCoupon: actual coupon based on date.
-        (float64) Residual: Outstanding principal amount.
-        (float64) AccruedInterest: Accrued interest since last coupon.
-        (float64) TechnicalValue: technical value.
-        (float64) Parity: parity of the bond.
-        (string) LastCoupon: date of last coupon.
-        (string) LasAmort: date of last amortization (payment of principal)
-        (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
-        (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
-        (string): CoefFechaCalculo: date of the coefficient used for settlement date.
-        (string): Maturity: of the bond.
- 
- Params:
-  ticker: (string) ticker of the pre-loaded bond.
-  settlementDate: (string) in `"2006-01-02"` format. 
-  rate: (float64) required rate for the given bond
-  initialFee: (float64) fee to charge on the beginning of the cashflow. Usually broker fee. Could be zero.
-  endingFee: (float64) fee to charge on the end of the cashflow. Usually broker fee. Could be zero.
-  extendIndex: (float64) rate (in anual terms) to use to extend coefficient in case it ends before settlement date.
-  
- 3.- schedule
- 
- Value: (json) Schedule of payments of the given bond from the settlement date.
- 
-  ticker: (string) ticker of the pre-loaded bond.
-  settlementDate: (string) in `"2006-01-02"` format.
- 
-4.- upload
+Devuelve: `Price`, `MDuration`, métricas extendidas (paridad, devengado, residual, CER usado, etc.).
 
-Value: (json) Message and ID of the uploaded bond.
+### GET /schedule
+Exporta bonos y flujos en ZIP (bonds.csv y cashflows.csv).  
+Parámetros (query):
+- `ticker` (repetible, requerido; ej. `?ticker=AL30&ticker=GD29D`)
+- `settlementDate` (opcional): si se pasa, solo flujos con fecha >= cutoff.
 
-This API implements these functions from /alpeb/go-finance/:
+Comportamiento:
+- Si un ticker no existe, se incluye en header `X-Missing-Tickers` y se continúa con los demás (si ninguno existe, 404).
+- Respuesta: ZIP con `bonds.csv` y `cashflows.csv`.
 
-- ScheduledInternalRateOfReturn
-- ScheduledNetPresentValue
-- dScheduledNetPresentValue
-- minMaxSlice
-- newton
- 
- 5.- bonds
- 
- Value: (json) The list of bonds available in the API
- 
- This endpoint does not require any params.
+### POST /upload
+Carga/actualiza bonos y flujos desde CSV (multipart). Requiere API key (`X-API-Key`).  
+Campos multipart:
+- `bonds` (CSV)
+- `cashflows` (CSV)
 
- 6.- apr
+Formato de `bonds.csv` (encabezados):
+```
+ticker,issue_date,maturity,coupon,index,offset,day_count_conv,active,operation
+```
+`operation`: `insert` (default) o `update`. Si el ticker existe y no es `update`, se descarta ese bono y sus flujos.
 
- Idem 1 but returns the APR instead of ytm. Works only with zero coupon bonds. The endpoint checks if the requested bond is zerocoupon.
- If bonds is index adjusted, it will look for the coefficientes of IssueDate, settlementDate and calculate a ratio. Works only with CER (http://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables_datos.asp?serie=3540&detalle=CER%A0(Base%202.2.2002=1))
+Formato de `cashflows.csv` (encabezados):
+```
+ticker,date,rate,amort,residual,amount
+```
 
- Value: (float64) Returns APR of the bond given its price and cashflow. 
-        (float64) Returns modified duration of the bond.
-        (int) AccrualDays: Accrual days since last interest payment.
-        (float64) CurrentCoupon: actual coupon based on date.
-        (float64) Residual: Outstanding principal amount.
-        (float64) AccruedInterest: Accrued interest since last coupon.
-        (float64) TechnicalValue: technical value.
-        (float64) Parity: parity of the bond.
-        (string) LastCoupon: N/A for this type of bonds.
-        (float64): CoefUsed: coefficient used for settlement date. It takes the offset of the bond (how many working days to look back) and, based on ExtendedIndex value during API call. 
-        (float64): CoefIssue: coefficient of the issuing date. Takes offset of the bond into account.
-        (string): CoefFechaCalculo: date of the coefficient used for settlement date.
-        (string): Maturity: of the bond.
+Reglas/validaciones:
+- Tickers normalizados a mayúsculas.
+- Cada bono debe tener >=1 cashflow; no se aceptan cashflows huérfanos.
+- Flujos se ordenan por fecha ascendente y se reasigna `seq`.
+- `residual` no puede aumentar (igual o decreciente). `amount` no se valida por ahora.
+- Fechas válidas y dentro de [issue_date, maturity].
+- day_count_conv debe ser 1..4.
+- Procesa bono a bono (parcial): los inválidos se omiten; los válidos se upsert dentro de transacción.
+- Tras éxito (insert/update) se recarga la caché en memoria.
 
-Params:
-  ticker: (string) ticker of the pre-loaded bond.
-  settlementDate: (string) in `"2006-01-02"` format. 
-  price: (float64) required price of the referred bond
-  initialFee: (float64) fee to charge on the beginning of the cashflow. Usually broker fee. Could be zero.
-  endingFee: (float64) fee to charge on the end of the cashflow. Usually broker fee. Could be zero.
-  extendIndex: (float64) rate (in anual terms) to use to extend coefficient in case it ends before settlement date.
-  
- 
+Respuesta (`application/json`):
+```
+{
+  "inserted": N,
+  "updated": M,
+  "skipped": K,
+  "errors": ["..."],          // motivos de errores o skips
+  "missing_cashflows": ["..."]// bonos sin flujos
+}
+```
+
+### GET /bonds
+Devuelve la lista de tickers disponibles.
+
+### /apr (deprecado)
+Usar `/yield`; `/apr` responde 410 con aviso de deprecación.
+
+Autenticación (para /upload)
+----------------------------
+Tabla `yields_api_keys` (ya creada). Enviar header `X-API-Key`. La API valida `active=true` y actualiza `last_used_at`.
+
+CSV de ejemplo
+--------------
+
+`bonds.csv`
+```
+ticker,issue_date,maturity,coupon,index,offset,day_count_conv,active,operation
+AL29N,2020-01-01,2029-01-01,0.09,,0,1,true,insert
+```
+
+`cashflows.csv`
+```
+ticker,date,rate,amort,residual,amount
+AL29N,2024-07-01,0.045,5,95,9.75
+AL29N,2025-07-01,0.045,5,90,9.55
+AL29N,2026-07-01,0.045,5,85,9.35
+```
+
+Ejemplos curl
+-------------
+
+`/upload`:
+```bash
+curl -X POST http://localhost:8080/upload \
+  -H "X-API-Key: TU_API_KEY" \
+  -F bonds=@/ruta/bonds.csv\;type=text/csv \
+  -F cashflows=@/ruta/cashflows.csv\;type=text/csv
+```
+
+`/schedule`:
+```bash
+curl -X GET "http://localhost:8080/schedule?ticker=AL29N&settlementDate=2025-12-12" -o schedule.zip
+```
+
+Notas internas
+--------------
+- `BOND_SEED_FROM_JSON=1` permite importar `bonds.json` a la DB en el arranque.
+- Los datos se cargan en memoria al iniciar y tras un upload exitoso.
+- Día de cómputo configurable por bono (`day_count_conv`). CER usa `offset` en días hábiles.
