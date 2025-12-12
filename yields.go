@@ -886,10 +886,11 @@ func yieldWrapper(c *gin.Context) {
 
 		techValue := ratio*residual + accInt
 		parity := price / techValue * 100
-
+		conv, _ := Convexity(cashFlow, r, settlementDate, initialFee, endingFee, price, dayCountConv)
 		c.JSON(http.StatusOK, gin.H{
 			"Yield":                 r,
 			"MDuration":             mduration,
+			"Convexity":             conv,
 			"AccrualDays":           accDays,
 			"CurrentCoupon: ":       coupon,
 			"Residual":              residual,
@@ -932,11 +933,13 @@ func yieldWrapper(c *gin.Context) {
 		dayCountConv = DayCount30_360 // Default a 30/360
 	}
 	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio, dayCountConv)
+	conv, _ := Convexity(cashFlow, r, settlementDate, initialFee, endingFee, price, dayCountConv)
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Yield":                 r,
 		"MDuration":             mduration,
+		"Convexity":             conv,
 		"AccrualDays":           info.accDays,
 		"CurrentCoupon: ":       info.currCoupon,
 		"Residual":              info.residual,
@@ -1055,11 +1058,13 @@ func priceWrapper(c *gin.Context) {
 	}
 	origPrice := p / ratio
 	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio, dayCountConv)
+	conv, _ := Convexity(cashFlow, rate, settlementDate, initialFee, endingFee, p, dayCountConv)
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &p, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Price":                 p,
 		"MDuration":             mduration,
+		"Convexity":             conv,
 		"AccrualDays":           info.accDays,
 		"CurrentCoupon: ":       info.currCoupon,
 		"Residual":              info.residual,
@@ -1122,6 +1127,33 @@ func extendedInfo(settlementDate *time.Time, cashflow *[]Flujo, p *float64, cfIn
 
 	return info
 
+}
+
+// Convexity calcula la convexidad (años^2) usando los mismos flujos y convención de días
+// Se asume rate en términos efectivos para el período usado (misma convención que Mduration/Yield)
+func Convexity(flow []Flujo, rate float64, settlementDate time.Time, initialFee float64, endingFee float64, price float64, dayCountConv int) (float64, error) {
+	values, dates, _ := GenerateArrays(flow, settlementDate, initialFee, endingFee, 0)
+	if len(values) != len(dates) {
+		return 0, errors.New("values and dates must have the same length")
+	}
+
+	denom := price
+	if denom == 0 {
+		denom = 1 // evitar división por cero; retornará 0 si no hay precio
+	}
+
+	var num float64
+	for i := 1; i < len(values); i++ { // desde el primer flujo (excluye el inicial en 0)
+		tYears := calculateDays(dayCountConv, settlementDate, dates[i])
+		discount := math.Pow(1+rate, tYears)
+		if discount == 0 {
+			return 0, errors.New("invalid discount factor")
+		}
+		num += values[i] * tYears * (tYears + 1) / discount
+	}
+
+	conv := num / (denom * math.Pow(1+rate, 2))
+	return conv, nil
 }
 
 func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error, int) {
