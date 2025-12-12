@@ -1226,7 +1226,8 @@ func CalculateTNA(yield float64, price float64, cashflow []Flujo, issueDate Fech
 		maturityTime := time.Time(maturity)
 		days360 := days360Between(settlementDate, maturityTime)
 		if days360 == 0 {
-			return 0, errors.New("days360 cannot be zero for zero coupon bond TNA calculation")
+			// Si days360 es 0 (y día es 31, bono muy cerca del vencimiento), retornar TNA = 0 en lugar de error
+			return 0, nil
 		}
 		amountOverPrice := amount / price
 		ratio := (amountOverPrice - 1)
@@ -1244,7 +1245,8 @@ func CalculateTNA(yield float64, price float64, cashflow []Flujo, issueDate Fech
 
 	days360 := days360Between(time.Time(cashflow[0].Date), time.Time(cashflow[1].Date))
 	if days360 == 0 {
-		return 0, errors.New("days360 cannot be zero for coupon bond TNA calculation")
+		// Si days360 es 0 (flujos muy cercanos), retornar TNA = 0 en lugar de error
+		return 0, nil
 	}
 
 	// TNA = ((1 + yield)^(dias360/360) - 1) * (360/dias360)
