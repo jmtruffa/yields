@@ -887,10 +887,18 @@ func yieldWrapper(c *gin.Context) {
 		techValue := ratio*residual + accInt
 		parity := price / techValue * 100
 		conv, _ := Convexity(cashFlow, r, settlementDate, initialFee, endingFee, price, dayCountConv)
+		// Para TNA usamos el precio ajustado por ratio (similar a cómo se ajusta para yield)
+		adjustedPrice := price / ratio
+		tna, tnaErr := CalculateTNA(r, adjustedPrice, cashFlow, Bonds[index].IssueDate, Bonds[index].Maturity, settlementDate)
+		if tnaErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Error calculating TNA: %v", tnaErr)})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"Yield":                 r,
 			"MDuration":             mduration,
 			"Convexity":             conv,
+			"TNA":                   tna,
 			"AccrualDays":           accDays,
 			"CurrentCoupon: ":       coupon,
 			"Residual":              residual,
@@ -934,12 +942,19 @@ func yieldWrapper(c *gin.Context) {
 	}
 	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio, dayCountConv)
 	conv, _ := Convexity(cashFlow, r, settlementDate, initialFee, endingFee, price, dayCountConv)
+	// Para TNA usamos el precio ajustado por ratio (price ya está ajustado en línea 921)
+	tna, tnaErr := CalculateTNA(r, price, cashFlow, Bonds[index].IssueDate, Bonds[index].Maturity, settlementDate)
+	if tnaErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Error calculating TNA: %v", tnaErr)})
+		return
+	}
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Yield":                 r,
 		"MDuration":             mduration,
 		"Convexity":             conv,
+		"TNA":                   tna,
 		"AccrualDays":           info.accDays,
 		"CurrentCoupon: ":       info.currCoupon,
 		"Residual":              info.residual,
@@ -1059,12 +1074,18 @@ func priceWrapper(c *gin.Context) {
 	origPrice := p / ratio
 	info := extendedInfo(&settlementDate, &cashFlow, &origPrice, cfIndex, ratio, dayCountConv)
 	conv, _ := Convexity(cashFlow, rate, settlementDate, initialFee, endingFee, p, dayCountConv)
+	tna, tnaErr := CalculateTNA(rate, p, cashFlow, Bonds[index].IssueDate, Bonds[index].Maturity, settlementDate)
+	if tnaErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Error calculating TNA: %v", tnaErr)})
+		return
+	}
 	//accDays, coupon, residual, accInt, techValue, parity, lastCoupon, _ := extendedInfo(&settlementDate, &cashFlow, &p, cfIndex)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Price":                 p,
 		"MDuration":             mduration,
 		"Convexity":             conv,
+		"TNA":                   tna,
 		"AccrualDays":           info.accDays,
 		"CurrentCoupon: ":       info.currCoupon,
 		"Residual":              info.residual,
@@ -1154,6 +1175,82 @@ func Convexity(flow []Flujo, rate float64, settlementDate time.Time, initialFee 
 
 	conv := num / (denom * math.Pow(1+rate, 2))
 	return conv, nil
+}
+
+// days360Between calcula días en base 360 (30/360) entre dos fechas, devolviendo días enteros
+func days360Between(startDate, endDate time.Time) int {
+	d1 := startDate.Day()
+	m1 := int(startDate.Month())
+	y1 := startDate.Year()
+
+	d2 := endDate.Day()
+	m2 := int(endDate.Month())
+	y2 := endDate.Year()
+
+	// Ajustar D1 si es 31
+	//originalD1 := d1 // se usa abajo para debug
+	if d1 == 31 {
+		d1 = 30
+	}
+
+	// Ajustar D2 si es 31 y D1 es 30 o 31
+	//originalD2 := d2 // se usa abajo para debug
+	if d2 == 31 && (d1 == 30 || d1 == 31) {
+		d2 = 30
+	}
+
+	// Calcular días: (Y2-Y1)*360 + (M2-M1)*30 + (D2-D1)
+	yearDiff := y2 - y1
+	monthDiff := m2 - m1
+	dayDiff := d2 - d1
+	days := yearDiff*360 + monthDiff*30 + dayDiff
+
+	/*fmt.Printf("DEBUG days360Between: startDate=%s (D=%d M=%d Y=%d), endDate=%s (D=%d M=%d Y=%d), d1_original=%d->%d, d2_original=%d->%d, yearDiff=%d, monthDiff=%d, dayDiff=%d, days360=%d\n",
+	startDate.Format(DateFormat), originalD1, m1, y1,
+	endDate.Format(DateFormat), originalD2, m2, y2,
+	originalD1, d1, originalD2, d2, yearDiff, monthDiff, dayDiff, days) */
+
+	return days
+}
+
+// CalculateTNA calcula la Tasa Nominal Anual según el tipo de bono
+func CalculateTNA(yield float64, price float64, cashflow []Flujo, issueDate Fecha, maturity Fecha, settlementDate time.Time) (float64, error) {
+	if price == 0 {
+		return 0, errors.New("price cannot be zero for TNA calculation")
+	}
+
+	// Bono cero cupón: un solo flujo
+	if len(cashflow) == 1 {
+		amount := cashflow[0].Amount
+		//issueDateTime := time.Time(issueDate) // se usa abajo para debug
+		maturityTime := time.Time(maturity)
+		days360 := days360Between(settlementDate, maturityTime)
+		if days360 == 0 {
+			return 0, errors.New("days360 cannot be zero for zero coupon bond TNA calculation")
+		}
+		amountOverPrice := amount / price
+		ratio := (amountOverPrice - 1)
+		daysRatio := 360.0 / float64(days360)
+		tna := ratio * daysRatio
+		/*fmt.Printf("DEBUG TNA (cero cupón): issueDate=%s, maturity=%s, days360=%d, amount=%.6f, price=%.6f, amount/price=%.6f, (amount/price-1)=%.6f, days360/360=%.6f, TNA=%.6f\n",
+		issueDateTime.Format(DateFormat), maturityTime.Format(DateFormat), days360, amount, price, amountOverPrice, ratio, daysRatio, tna) */
+		return tna, nil
+	}
+
+	// Bono con cupones: usar período entre 1er y 2do flujo
+	if len(cashflow) < 2 {
+		return 0, errors.New("cashflow must have at least 2 flows for coupon bond TNA calculation")
+	}
+
+	days360 := days360Between(time.Time(cashflow[0].Date), time.Time(cashflow[1].Date))
+	if days360 == 0 {
+		return 0, errors.New("days360 cannot be zero for coupon bond TNA calculation")
+	}
+
+	// TNA = ((1 + yield)^(dias360/360) - 1) * (360/dias360)
+	periodYears := float64(days360) / 360.0
+	tna := (math.Pow(1+yield, periodYears) - 1) * (360.0 / float64(days360))
+	return tna, nil
 }
 
 func Yield(flow []Flujo, price float64, settlementDate time.Time, initialFee float64, endingFee float64) (float64, error, int) {
